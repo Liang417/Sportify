@@ -35,10 +35,8 @@ export async function signUp(req, res, next) {
     });
 
     return res.status(200).json({
-      data: {
-        token,
-        user,
-      },
+      token,
+      user,
     });
   } catch (err) {
     next(err);
@@ -76,10 +74,8 @@ export async function signIn(req, res, next) {
     });
 
     return res.status(200).json({
-      data: {
-        token,
-        user,
-      },
+      token,
+      user,
     });
   } catch (err) {
     next(err);
