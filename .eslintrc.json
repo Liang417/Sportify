@@ -9,5 +9,10 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "rules": {}
+  "globals": {
+    "Bun": false
+  },
+  "rules": {
+    "consistent-return": "off"
+  }
 }
