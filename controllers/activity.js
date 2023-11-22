@@ -19,15 +19,6 @@ export async function searchActivities(req, res) {
   }
 }
 
-export async function filterActivities(req, res) {
-  try {
-    const activities = await activityModel.filterActivities(req.query);
-    res.status(200).json(activities);
-  } catch (err) {
-    res.status(500).json({ errors: err });
-  }
-}
-
 export async function getTypes(req, res) {
   try {
     const types = await activityModel.getTypes();

@@ -12,3 +12,8 @@ export async function create(name, email, hashedPassword, avatar) {
   );
   return rows[0];
 }
+
+export async function getAllUsers() {
+  const { rows } = await pool.query('SELECT id, name, email, avatar FROM "user"');
+  return rows;
+}

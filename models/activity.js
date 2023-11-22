@@ -56,10 +56,15 @@ export async function searchActivities(query) {
   }
 
   const queryText = `
-    SELECT activity.*, activity_type.name as type_name FROM activity
-    JOIN activity_type ON activity.type = activity_type.id
-    ${condition}
-  `;
+  SELECT
+    activity.*,
+    activity_type.name as type_name,
+    ST_X(location::geometry) as longitude,
+    ST_Y(location::geometry) as latitude
+  FROM activity
+  JOIN activity_type ON activity.type = activity_type.id
+  ${condition}
+`;
 
   const { rows } = await pool.query(queryText, values);
   return rows;
