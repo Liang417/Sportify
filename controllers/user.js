@@ -81,3 +81,24 @@ export async function signIn(req, res, next) {
     next(err);
   }
 }
+
+export async function getAllUsers(req, res, next) {
+  try {
+    const users = await userModel.getAllUsers();
+    return res.status(200).json({
+      users,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getUser(req, res, next) {
+  try {
+    return res.status(200).json({
+      user: res.locals.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
