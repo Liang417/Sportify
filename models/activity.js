@@ -70,6 +70,36 @@ export async function searchActivities(query) {
   return rows;
 }
 
+export async function getActivityDetail(id) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      activity.id,
+      activity.title,
+      activity.price,
+      activity.attendees_limit,
+      activity.start_from,
+      activity.end_at,
+      activity.dateline,
+      activity.note,
+      activity.create_at,
+      activity_type.name as type_name,
+      ST_X(location::geometry) as longitude,
+      ST_Y(location::geometry) as latitude,
+      "user".id as host_id,
+      "user".name as host_name,
+      "user".email as host_email,
+      "user".avatar as host_avatar
+    FROM activity
+    JOIN activity_type ON activity.type = activity_type.id
+    JOIN "user" ON activity.host = "user".id
+    WHERE activity.id = $1
+  `,
+    [id],
+  );
+  return rows[0];
+}
+
 export async function getTypes() {
   const { rows } = await pool.query(
     `

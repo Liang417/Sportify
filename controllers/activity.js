@@ -19,6 +19,18 @@ export async function searchActivities(req, res) {
   }
 }
 
+export async function getActivityDetail(req, res) {
+  try {
+    const { id } = req.params;
+    const activityDetail = await activityModel.getActivityDetail(id);
+    if (!activityDetail) return res.status(404).json({ errors: 'Activity not found' });
+
+    res.status(200).json(activityDetail);
+  } catch (err) {
+    res.status(500).json({ errors: err });
+  }
+}
+
 export async function getTypes(req, res) {
   try {
     const types = await activityModel.getTypes();
