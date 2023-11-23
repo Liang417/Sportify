@@ -1,6 +1,6 @@
 import pool from './databasePool';
 
-export async function createActivity(activityData, host) {
+export async function createActivity(activityData, host, pictureFilename) {
   const {
     type,
     title,
@@ -18,11 +18,23 @@ export async function createActivity(activityData, host) {
 
   const { rows } = await pool.query(
     `
-    INSERT INTO activity(host, type, title, location, price, attendees_limit, start_from, end_at, dateline, note)
-    VALUES($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6, $7, $8, $9, $10)
+    INSERT INTO activity(host, type, title, location, price, attendees_limit, start_from, end_at, dateline, note, picture)
+    VALUES($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6, $7, $8, $9, $10, $11)
     RETURNING *
     `,
-    [host, type, title, locationPoint, price, attendeesLimit, startFrom, endAt, dateline, note],
+    [
+      host,
+      type,
+      title,
+      locationPoint,
+      price,
+      attendeesLimit,
+      startFrom,
+      endAt,
+      dateline,
+      note,
+      pictureFilename,
+    ],
   );
 
   return rows;
@@ -83,6 +95,7 @@ export async function getActivityDetail(id) {
       activity.dateline,
       activity.note,
       activity.create_at,
+      activity.picture,
       activity_type.name as type_name,
       ST_X(location::geometry) as longitude,
       ST_Y(location::geometry) as latitude,
@@ -107,4 +120,18 @@ export async function getTypes() {
     `,
   );
   return rows;
+}
+
+export async function incrementAttendance(activityId, connection) {
+  const { rowCount } = await connection.query(
+    `
+      UPDATE activity
+      SET current_attendees_count = current_attendees_count + 1
+      WHERE id = $1
+      AND current_attendees_count + 1 <= attendees_limit
+      `,
+    [activityId],
+  );
+
+  return rowCount > 0;
 }
