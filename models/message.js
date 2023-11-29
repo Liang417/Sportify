@@ -1,19 +1,27 @@
 import pool from './databasePool';
 
-export async function createMessage(chatroomId, senderId, content, isGroupMessage = false) {
+export async function createMessage(chatroomId, senderId, content) {
   await pool.query(
     `
-  INSERT INTO message (chatroom_id, sender_id, content, is_group_message) 
-  VALUES ($1, $2, $3, $4)
+  INSERT INTO message (chatroom_id, sender_id, content) 
+  VALUES ($1, $2, $3)
   `,
-    [chatroomId, senderId, content, isGroupMessage],
+    [chatroomId, senderId, content],
   );
 }
 
 export async function getMessages(chatroomId) {
   const { rows } = await pool.query(
     `
-    SELECT * FROM message
+    SELECT 
+      message.id,
+      chatroom_id as chatroom_id,
+      sender_id as sender_id,
+      content,
+      name as sender_name,
+      avatar as sender_avatar
+    FROM message
+    JOIN "user" ON message.sender_id = "user".id
     WHERE chatroom_id = $1
     `,
     [chatroomId],
