@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import validator from 'validator';
 import * as userModel from '../models/user';
+import { getUserActivities } from '../models/activity_user';
 
 export async function signUp(req, res, next) {
   try {
@@ -9,7 +10,9 @@ export async function signUp(req, res, next) {
     const avatarUrl = avatar[0].filename;
 
     if (!name || !email || !password || !avatarUrl[0]) {
-      return res.status(400).json({ message: 'Name, email, password, and avatar are required.' });
+      return res
+        .status(400)
+        .json({ message: 'Name, email, password, and avatar are required.' });
     }
 
     if (!validator.isEmail(email)) {
@@ -48,7 +51,9 @@ export async function signIn(req, res, next) {
     const { email, password } = req.body;
 
     if (!validator.isEmail(email) || !password) {
-      return res.status(403).json({ message: 'Wrong email or password format.' });
+      return res
+        .status(403)
+        .json({ message: 'Wrong email or password format.' });
     }
 
     const user = await userModel.findByEmail(email);
@@ -97,6 +102,17 @@ export async function getUser(req, res, next) {
   try {
     return res.status(200).json({
       user: res.locals.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getActivities(req, res, next) {
+  try {
+    const activities = await getUserActivities(res.locals.user.id);
+    return res.status(200).json({
+      activities,
     });
   } catch (err) {
     next(err);
