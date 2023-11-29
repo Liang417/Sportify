@@ -1,15 +1,20 @@
 import pool from './databasePool';
 
-export async function createActivity(activityData, host, pictureFilename) {
+export async function createActivity(
+  activityData,
+  hostId,
+  chatroomId,
+  pictureFilename,
+) {
   const {
-    type,
+    typeId,
     title,
     price,
     attendeesLimit,
     startFrom,
     endAt,
     dateline,
-    note,
+    description,
     longitude,
     latitude,
   } = activityData;
@@ -18,13 +23,14 @@ export async function createActivity(activityData, host, pictureFilename) {
 
   const { rows } = await pool.query(
     `
-    INSERT INTO activity(host, type, title, location, price, attendees_limit, start_from, end_at, dateline, note, picture)
-    VALUES($1, $2, $3, ST_GeomFromText($4, 4326), $5, $6, $7, $8, $9, $10, $11)
+    INSERT INTO activity(host_id, type_id, chatroom_id, title, location, price, attendees_limit, start_from, end_at, dateline, description, picture)
+    VALUES($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7, $8, $9, $10, $11, $12)
     RETURNING *
     `,
     [
-      host,
-      type,
+      hostId,
+      typeId,
+      chatroomId,
       title,
       locationPoint,
       price,
@@ -32,17 +38,17 @@ export async function createActivity(activityData, host, pictureFilename) {
       startFrom,
       endAt,
       dateline,
-      note,
+      description,
       pictureFilename,
     ],
   );
 
-  return rows;
+  return rows[0];
 }
 
 export async function searchActivities(query) {
   const {
-    title, type, startDate, endDate,
+    title, typeId, startDate, endDate,
   } = query;
 
   let condition = `
@@ -51,10 +57,10 @@ export async function searchActivities(query) {
   const values = [`%${title || ''}%`];
   let params = 1;
 
-  if (type) {
+  if (typeId) {
     params += 1;
-    condition += ` AND type = $${params}`;
-    values.push(type);
+    condition += ` AND type_id = $${params}`;
+    values.push(typeId);
   }
   if (startDate) {
     params += 1;
@@ -74,7 +80,7 @@ export async function searchActivities(query) {
     ST_X(location::geometry) as longitude,
     ST_Y(location::geometry) as latitude
   FROM activity
-  JOIN activity_type ON activity.type = activity_type.id
+  JOIN activity_type ON activity.type_id = activity_type.id
   ${condition}
 `;
 
@@ -89,11 +95,12 @@ export async function getActivityDetail(id) {
       activity.id,
       activity.title,
       activity.price,
+      activity.chatroom_id,
       activity.attendees_limit,
       activity.start_from,
       activity.end_at,
       activity.dateline,
-      activity.note,
+      activity.description,
       activity.create_at,
       activity.picture,
       activity_type.name as type_name,
@@ -104,8 +111,8 @@ export async function getActivityDetail(id) {
       "user".email as host_email,
       "user".avatar as host_avatar
     FROM activity
-    JOIN activity_type ON activity.type = activity_type.id
-    JOIN "user" ON activity.host = "user".id
+    JOIN activity_type ON activity.type_id = activity_type.id
+    JOIN "user" ON activity.host_id = "user".id
     WHERE activity.id = $1
   `,
     [id],
