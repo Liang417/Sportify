@@ -7,6 +7,7 @@ import activityRouter from './routes/activity';
 import userRouter from './routes/user';
 import chatroomRouter from './routes/chatroom';
 import messageRouter from './routes/message';
+import notificationRouter from './routes/notification';
 
 const app = express();
 const server = createServer(app);
@@ -16,7 +17,7 @@ app.use(express.static('public'));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api', [activityRouter, userRouter, chatroomRouter, messageRouter]);
+app.use('/api', [activityRouter, userRouter, chatroomRouter, messageRouter, notificationRouter]);
 app.use(errorHandler);
 
 io.on('connection', (socket) => {
