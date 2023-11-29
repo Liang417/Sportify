@@ -1,21 +1,53 @@
 import * as chatroomModel from '../models/chatroom';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function getChatroom(req, res, next) {
+export async function createChatroom(req, res, next) {
   try {
     const userId1 = res.locals.user.id;
-    const userId2 = req.params.id;
+    const userId2 = req.body.userId;
 
-    let chatroomId = await chatroomModel.getChatroom(userId1, userId2);
+    const isPrivate = true;
+    let chatroomId = await chatroomModel.getChatroom(
+      userId1,
+      userId2,
+      isPrivate,
+    );
 
     if (chatroomId) {
-      return res.json(Number(chatroomId));
+      return res.json(chatroomId);
     }
 
-    chatroomId = await chatroomModel.createChatroom();
+    chatroomId = await chatroomModel.createChatroom(isPrivate);
+    await chatroomModel.createChatroomUser(chatroomId, [userId1, userId2]);
 
-    await chatroomModel.createChatroomUser(chatroomId, userId1, userId2);
-    return res.json(Number(chatroomId));
+    return res.json(chatroomId);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPrivateChatrooms(req, res, next) {
+  try {
+    const isPrivate = true;
+    const userId = res.locals.user.id;
+
+    let chatroomIds = await chatroomModel.getChatroomIds(userId, isPrivate);
+    chatroomIds = chatroomIds.map((chatroom) => chatroom.id);
+    const privateChatrooms = await chatroomModel.getChatrooms(userId, chatroomIds);
+
+    return res.json({ privateChatrooms });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getGroupChatrooms(req, res, next) {
+  try {
+    const isPrivate = false;
+    const userId = res.locals.user.id;
+
+    const groupChatrooms = await chatroomModel.getChatroomIds(userId, isPrivate);
+
+    return res.json({ groupChatrooms });
   } catch (err) {
     next(err);
   }

@@ -1,4 +1,6 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
+
+types.setTypeParser(20, (val) => parseInt(val, 10));
 
 const pool = new Pool({
   host: process.env.POSTGRES_HOST,
