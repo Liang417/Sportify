@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { errorHandler } from './utils/errorHandler';
 import activityRouter from './routes/activity';
 import userRouter from './routes/user';
@@ -14,6 +15,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
 app.use(express.static('public'));
 app.use(cookieParser());
 app.use(express.json());
