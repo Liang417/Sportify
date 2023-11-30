@@ -10,6 +10,7 @@ import { getUser } from "../../models/activity_user";
 import { useDispatch } from "react-redux";
 import Homepage from "./pages/Homepage";
 import CreateActivityPage from "./pages/CreateActivityPage";
+import MessagePage from "./pages/MessagePage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -37,6 +38,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CreateActivityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/message"
+          element={
+            <ProtectedRoute>
+              <MessagePage />
             </ProtectedRoute>
           }
         />
