@@ -8,6 +8,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import { getUser } from "../../models/activity_user";
 import { useDispatch } from "react-redux";
+import Homepage from "./pages/Homepage";
+import CreateActivityPage from "./pages/CreateActivityPage";
+import MessagePage from "./pages/MessagePage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -19,6 +22,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Homepage />}></Route>
         <Route path="/user/signin" element={<SigninPage />}></Route>
         <Route path="/user/signup" element={<SignupPage />}></Route>
         <Route
@@ -26,6 +30,22 @@ const App = () => {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <CreateActivityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/message"
+          element={
+            <ProtectedRoute>
+              <MessagePage />
             </ProtectedRoute>
           }
         />

@@ -35,8 +35,8 @@ io.on('connection', (socket) => {
     socket.join(roomId);
   });
 
-  socket.on('chat message', (msg, roomId) => {
-    io.to(roomId).emit('chat message', msg);
+  socket.on('sendMessage', (message) => {
+    io.to(message.chatroom_id).emit('getMessage', message);
   });
 });
 
