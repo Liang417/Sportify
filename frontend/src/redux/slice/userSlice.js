@@ -7,7 +7,7 @@ export const getUser = createAsyncThunk("user/getUser", async () => {
     });
     const data = await response.json();
     if (response.status !== 200) throw Error(data.message);
-    return data;
+    return data.user;
   } catch (err) {
     throw new Error(err);
   }

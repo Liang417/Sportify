@@ -7,7 +7,7 @@ const socket = socketIO(`${import.meta.env.VITE_SOCKET}`, {
 });
 
 const MessagePage = () => {
-  const { user } = useSelector((state) => state.user.user);
+  const { user } = useSelector((state) => state.user);
   const [privateChatrooms, setPrivateChatrooms] = useState([]);
   const [groupChatrooms, setGroupChatrooms] = useState([]);
   const [activeChatroom, setActiveChatroom] = useState(null);
