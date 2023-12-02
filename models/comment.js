@@ -3,7 +3,7 @@ import pool from './databasePool';
 export async function getComments(activityId) {
   const query = `
   SELECT 
-    "comment".user_id,
+    comment.user_id,
     "user".name,
     "user".avatar,
     content,
@@ -11,6 +11,7 @@ export async function getComments(activityId) {
   FROM comment
   JOIN "user" ON comment.user_id = "user".id
   WHERE activity_id = $1
+  ORDER BY comment_at
   `;
   const values = [activityId];
   const { rows } = await pool.query(query, values);

@@ -1,11 +1,6 @@
 import pool from './databasePool';
 
-export async function createActivity(
-  activityData,
-  hostId,
-  chatroomId,
-  pictureFilename,
-) {
+export async function createActivity(activityData, hostId, chatroomId, pictureFilename) {
   const {
     typeId,
     title,
@@ -17,14 +12,15 @@ export async function createActivity(
     description,
     longitude,
     latitude,
+    locationName,
   } = activityData;
 
   const locationPoint = `POINT(${longitude} ${latitude})`;
 
   const { rows } = await pool.query(
     `
-    INSERT INTO activity(host_id, type_id, chatroom_id, title, location, price, attendees_limit, start_from, end_at, dateline, description, picture)
-    VALUES($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7, $8, $9, $10, $11, $12)
+    INSERT INTO activity(host_id, type_id, chatroom_id, title, location, location_name, price, attendees_limit, start_from, end_at, dateline, description, picture)
+    VALUES($1, $2, $3, $4, ST_GeomFromText($5, 4326), $6, $7, $8, $9, $10, $11, $12, $13)
     RETURNING *
     `,
     [
@@ -33,6 +29,7 @@ export async function createActivity(
       chatroomId,
       title,
       locationPoint,
+      locationName,
       price,
       attendeesLimit,
       startFrom,
@@ -97,12 +94,14 @@ export async function getActivityDetail(id) {
       activity.price,
       activity.chatroom_id,
       activity.attendees_limit,
+      activity.current_attendees_count,
       activity.start_from,
       activity.end_at,
       activity.dateline,
       activity.description,
       activity.create_at,
       activity.picture,
+      activity.location_name,
       activity_type.name as type_name,
       ST_X(location::geometry) as longitude,
       ST_Y(location::geometry) as latitude,
