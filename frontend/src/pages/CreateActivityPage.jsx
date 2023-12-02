@@ -1,93 +1,48 @@
-/* eslint-disable no-undef */
 import { useEffect, useRef, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { toast } from "react-toastify";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 
 const CreateActivityPage = () => {
   const [activityTypes, setActivityTypes] = useState([]);
   const [tags, setTags] = useState([]);
   const [tagOptions, setTagOptions] = useState([]);
-  const mapRef = useRef(null);
+  const [libraries] = useState(["places"]);
+  const [center, setCenter] = useState({ lat: 25.03746, lng: 121.564558 });
+  const autocompleteInputRef = useRef(null);
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
+    libraries,
+    language: "zh-TW",
+  });
 
   useEffect(() => {
-    window.initMap = initMap;
-
-    if (!window.google) {
-      loadGoogleMaps();
-    }
-
     getActivityTypes().then(setActivityTypes);
     getTags().then(setTagOptions);
-    return () => {
-      window.initMap = undefined;
-    };
   }, []);
 
-  const loadGoogleMaps = () => {
-    const existingScript = document.querySelector('script[src*="googleapis"]');
-    if (!existingScript) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCtl2-WkzFdv8HKXFChDCJDspBqLDxgKcc&libraries=places&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
+  useEffect(() => {
+    if (isLoaded && autocompleteInputRef.current) {
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        autocompleteInputRef.current,
+        { componentRestrictions: { country: "TW" } }
+      );
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          const location = place.geometry.location;
+          setCenter({
+            lat: location.lat(),
+            lng: location.lng(),
+          });
+          document.getElementById("latitude").value = center.lat;
+          document.getElementById("longitude").value = center.lng;
+        }
+      });
     }
-  };
-
-  const initMap = () => {
-    const map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 25.030724, lng: 121.520076 },
-      zoom: 12,
-    });
-    const input = document.getElementById("search_location");
-    const autocomplete = new google.maps.places.Autocomplete(input);
-    const marker = new google.maps.Marker({
-      map: map,
-      anchorPoint: new google.maps.Point(0, -29),
-    });
-
-    autocomplete.bindTo("bounds", map);
-
-    autocomplete.addListener("place_changed", function () {
-      marker.setVisible(false);
-      const place = autocomplete.getPlace();
-      if (!place.geometry) {
-        window.alert("No details available for input: '" + place.name + "'");
-        return;
-      }
-
-      // If the place has a geometry, present it on a map.
-      if (place.geometry.viewport) {
-        map.fitBounds(place.geometry.viewport);
-      } else {
-        map.setCenter(place.geometry.location);
-        map.setZoom(15);
-      }
-
-      // Set the marker position and make it visible
-      marker.setPosition(place.geometry.location);
-      marker.setVisible(true);
-
-      // Set the latitude and longitude in the form
-      document.getElementById("latitude").value = place.geometry.location.lat();
-      document.getElementById("longitude").value =
-        place.geometry.location.lng();
-    });
-
-    // Geolocation to set current position
-    navigator.geolocation.getCurrentPosition((position) => {
-      const currentPosition = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      };
-
-      map.setCenter(currentPosition);
-      marker.setPosition(currentPosition);
-      marker.setVisible(true);
-      map.setZoom(15);
-    });
-  };
+  }, [isLoaded]);
 
   const getActivityTypes = async () => {
     const response = await fetch(
@@ -190,17 +145,29 @@ const CreateActivityPage = () => {
           </label>
           <input
             id="search_location"
-            className="mt-1 p-2 w-full border rounded-md mb-4"
+            ref={autocompleteInputRef}
             type="text"
-            placeholder="Enter a location"
             name="locationName"
+            placeholder="Enter a location"
+            className="mt-1 p-2 w-full border rounded-md mb-4"
+            autoComplete="off"
             required
           />
-          <div
-            id="map"
-            ref={mapRef}
-            style={{ height: "400px", width: "100%" }}
-          ></div>
+          {isLoaded ? (
+            <GoogleMap
+              key={center}
+              mapContainerStyle={{
+                width: "100%",
+                height: "350px",
+              }}
+              center={center}
+              zoom={17}
+            >
+              <Marker position={center} />
+            </GoogleMap>
+          ) : (
+            <></>
+          )}
 
           <input type="hidden" id="latitude" name="latitude" />
           <input type="hidden" id="longitude" name="longitude" />
