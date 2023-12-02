@@ -2,7 +2,7 @@ import { useSelector } from "react-redux";
 import Header from "../components/layout/Header";
 
 const ProfilePage = () => {
-  const { user } = useSelector((state) => state.user.user);
+  const { user } = useSelector((state) => state.user);
   return (
     <>
       <Header />

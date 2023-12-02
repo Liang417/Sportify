@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
+import { toast } from "react-toastify";
 
 const CreateActivityPage = () => {
   const [activityTypes, setActivityTypes] = useState([]);
@@ -105,6 +106,12 @@ const CreateActivityPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (
+      !document.getElementById("latitude").value ||
+      !document.getElementById("longitude").value
+    )
+      return toast.error("Please choice location on the map.");
+
     const formData = new FormData(event.target);
     formData.append("tags", JSON.stringify(tags));
 
@@ -116,12 +123,12 @@ const CreateActivityPage = () => {
       });
 
       if (response.ok) {
-        console.log("Activity created successfully");
+        toast.success("Activity created successfully");
       } else {
-        console.error("Error creating activity");
+        toast.error("Error creating activity");
       }
     } catch (error) {
-      console.error("Error submitting form", error);
+      toast.error("Error submitting form", error);
     }
   };
 
@@ -161,6 +168,7 @@ const CreateActivityPage = () => {
             id="type"
             name="typeId"
             className="mt-1 p-2 w-full border rounded-md"
+            required
           >
             <option value="" className="bg-gray-100">
               選擇活動種類
@@ -327,6 +335,7 @@ const CreateActivityPage = () => {
             name="picture"
             accept="image/*"
             className="mt-1 p-2 w-full border rounded-md"
+            required
           />
         </div>
 

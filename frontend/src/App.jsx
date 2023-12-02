@@ -6,11 +6,12 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
-import { getUser } from "../../models/activity_user";
+import { getUser } from "./redux/slice/userSlice";
 import { useDispatch } from "react-redux";
 import Homepage from "./pages/Homepage";
 import CreateActivityPage from "./pages/CreateActivityPage";
 import MessagePage from "./pages/MessagePage";
+import ActivityDetailPage from "./pages/ActivityDetailPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -41,6 +42,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/activity/detail/:id" element={<ActivityDetailPage />} />
         <Route
           path="/message"
           element={
