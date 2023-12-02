@@ -72,9 +72,7 @@ export async function attendActivity(req, res) {
     const user = await activityUserModel.getUser(activityId, userId);
 
     if (user) {
-      return res
-        .status(400)
-        .json({ errors: 'You already attended this activity' });
+      return res.status(400).json({ errors: 'You already attended this activity' });
     }
 
     await activityUserModel.insertUser(activityId, userId, connection);
@@ -85,23 +83,13 @@ export async function attendActivity(req, res) {
 
     const content = `New attendee ${res.locals.user.name} join your activity`;
 
-    await notificationModel.createNotification(
-      attendeesIds,
-      activityId,
-      content,
-      connection,
-    );
+    await notificationModel.createNotification(attendeesIds, activityId, content, connection);
 
-    const isSuccess = await activityModel.incrementAttendance(
-      activityId,
-      connection,
-    );
+    const isSuccess = await activityModel.incrementAttendance(activityId, connection);
 
     if (!isSuccess) {
       await connection.query('ROLLBACK');
-      return res
-        .status(400)
-        .json({ errors: 'This activity has reached the attendees limit' });
+      return res.status(400).json({ errors: 'This activity has reached the attendees limit' });
     }
 
     await connection.query('COMMIT');

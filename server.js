@@ -10,6 +10,7 @@ import chatroomRouter from './routes/chatroom';
 import messageRouter from './routes/message';
 import notificationRouter from './routes/notification';
 import commentRouter from './routes/comment';
+import tagRouter from './routes/tag';
 
 const app = express();
 const server = createServer(app);
@@ -27,6 +28,7 @@ app.use('/api', [
   messageRouter,
   notificationRouter,
   commentRouter,
+  tagRouter,
 ]);
 app.use(errorHandler);
 

@@ -10,9 +10,7 @@ export async function signUp(req, res, next) {
     const avatarUrl = avatar[0].filename;
 
     if (!name || !email || !password || !avatarUrl[0]) {
-      return res
-        .status(400)
-        .json({ message: 'Name, email, password, and avatar are required.' });
+      return res.status(400).json({ message: 'Name, email, password, and avatar are required.' });
     }
 
     if (!validator.isEmail(email)) {
@@ -33,7 +31,7 @@ export async function signUp(req, res, next) {
 
     res.cookie('jwtToken', token, {
       httpOnly: true,
-      maxAge: 3600000,
+      maxAge: process.env.JWT_EXPIRE,
       sameSite: 'strict',
     });
 
@@ -51,9 +49,7 @@ export async function signIn(req, res, next) {
     const { email, password } = req.body;
 
     if (!validator.isEmail(email) || !password) {
-      return res
-        .status(403)
-        .json({ message: 'Wrong email or password format.' });
+      return res.status(403).json({ message: 'Wrong email or password format.' });
     }
 
     const user = await userModel.findByEmail(email);
@@ -69,12 +65,12 @@ export async function signIn(req, res, next) {
     delete user.password;
 
     const token = jwt.sign({ user }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE * 1000,
+      expiresIn: process.env.JWT_EXPIRE,
     });
 
     res.cookie('jwtToken', token, {
       httpOnly: true,
-      maxAge: 3600000,
+      maxAge: process.env.JWT_EXPIRE,
       sameSite: 'strict',
     });
 
