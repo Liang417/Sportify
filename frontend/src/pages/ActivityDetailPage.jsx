@@ -17,6 +17,17 @@ const ActivityDetailPage = () => {
   const [libraries] = useState(["places"]);
   const latestCommentRef = useRef(null);
 
+  const formatDate = (dateString) => {
+    const options = {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
     libraries,
@@ -274,16 +285,8 @@ const ActivityDetailPage = () => {
                           <div>End:</div>
                         </div>
                         <div>
-                          <div>
-                            {new Date(detail.start_from)
-                              .toLocaleString()
-                              .slice(0, 17)}
-                          </div>
-                          <div>
-                            {new Date(detail.end_at)
-                              .toLocaleString()
-                              .slice(0, 17)}
-                          </div>
+                          <div>{formatDate(detail.start_from)}</div>
+                          <div>{formatDate(detail.end_at)}</div>
                         </div>
                       </div>
                     </div>
@@ -374,7 +377,7 @@ const ActivityDetailPage = () => {
               <div className="flex justify-between text-gray7">
                 <div className="flex-col justify-center sm:flex">
                   <div className="flex flex-col uppercase leading-7 tracking-tight">
-                    {new Date(detail.start_from).toLocaleString().slice(0, 17)}
+                    {formatDate(detail.start_from)}
                   </div>
                   <div>
                     <p className="font-semibold">{detail.title}</p>
