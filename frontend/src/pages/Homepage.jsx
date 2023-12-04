@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import ActivityCard from "../components/ActivityCard";
 import { toast } from "react-toastify";
+import Search from "../components/layout/EmptyResult";
 
 const Homepage = () => {
   const [selectedType, setSelectedType] = useState("");
@@ -97,7 +98,7 @@ const Homepage = () => {
       <div>
         <Header />
       </div>
-      <div className="px-5 py-6 w-full border-b-2 bg-white">
+      <div className="px-5 py-6 w-full bg-white">
         <div className="w-max-width flex gap-10 mx-auto mt-10">
           <div>
             <LocalizationProvider dateAdapter={AdapterMoment}>
@@ -195,10 +196,16 @@ const Homepage = () => {
             </div>
 
             <div>
-              {activities?.length > 0 &&
+              {activities?.length > 0 ? (
                 activities.map((activity) => (
                   <ActivityCard key={activity.id} activity={activity} />
-                ))}
+                ))
+              ) : (
+                <div className="mt-[-50px] text-center">
+                  <Search />
+                  <p className="text-[20px]">沒有符合的活動</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

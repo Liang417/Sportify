@@ -41,13 +41,29 @@ export async function getActivityAttendees(activityId) {
   return rows;
 }
 
-export async function getUserActivities(userId) {
+export async function getUserActivities(userId, query) {
+  let condition = '';
+  const queryParams = [userId, new Date()];
+
+  if (query.option === 'attending') {
+    condition = 'WHERE user_id = $1 AND start_from > $2 ORDER BY start_from ASC';
+  }
+
+  if (query.option === 'hosting') {
+    condition = 'WHERE host_id = $1 AND start_from > $2 ORDER BY start_from ASC';
+  }
+
+  if (query.option === 'past') {
+    condition = 'WHERE user_id = $1 AND start_from < $2 ORDER BY start_from ASC';
+  }
+
   const { rows } = await pool.query(
     `
-    SELECT activity_id FROM activity_user
-    WHERE user_id = $1
+    SELECT * FROM activity_user
+    JOIN activity ON activity_user.activity_id = activity.id
+    ${condition}
   `,
-    [userId],
+    queryParams,
   );
   return rows;
 }
