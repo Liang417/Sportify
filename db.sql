@@ -1,4 +1,6 @@
 CREATE EXTENSION postgis;
+CREATE INDEX location_idx ON activity USING GIST (location);
+
 
 CREATE TABLE "user" (
   id BIGSERIAL PRIMARY KEY,
