@@ -101,3 +101,12 @@ export async function attendActivity(req, res) {
     connection.release();
   }
 }
+
+export async function getActivities(req, res) {
+  try {
+    const activities = await activityModel.getActivities(req.query);
+    res.status(200).json(activities);
+  } catch (err) {
+    res.status(500).json({ errors: err });
+  }
+}

@@ -141,3 +141,58 @@ export async function incrementAttendance(activityId, connection) {
 
   return rowCount > 0;
 }
+
+export async function getActivities(query) {
+  let baseQuery = 'SELECT * FROM activity';
+  const queryParams = [];
+  const conditions = [];
+
+  if (query.typeId) {
+    queryParams.push(parseInt(query.typeId, 10));
+    conditions.push(`type_id = $${queryParams.length}`);
+  }
+
+  if (query.date) {
+    queryParams.push(query.date);
+    conditions.push(`start_from >= $${queryParams.length}`);
+  }
+
+  if (query.distance && query.lat && query.lng) {
+    queryParams.push(parseFloat(query.lng));
+    queryParams.push(parseFloat(query.lat));
+    queryParams.push(parseFloat(query.distance));
+
+    conditions.push(
+      `ST_DWithin(location, ST_SetSRID(ST_MakePoint($${queryParams.length - 2}, $${
+        queryParams.length - 1
+      }), 4326), $${queryParams.length})`,
+    );
+  }
+
+  if (query.price) {
+    queryParams.push(parseFloat(query.price));
+    conditions.push(`price <= $${queryParams.length}`);
+  }
+
+  if (conditions.length) {
+    baseQuery += ` WHERE ${conditions.join(' AND ')}`;
+  }
+
+  baseQuery += ' ORDER BY start_from ASC';
+
+  // const fullQuery = buildFullQueryString(baseQuery, queryParams);
+  // console.log('完整查詢字串:', fullQuery);
+
+  const { rows } = await pool.query(baseQuery, queryParams);
+  return rows;
+}
+
+// function buildFullQueryString(baseQuery, queryParams) {
+//   let fullQuery = baseQuery;
+
+//   queryParams.forEach((param, index) => {
+//     fullQuery = fullQuery.replace(new RegExp(`\\$${index + 1}`, 'g'), `${param}`);
+//   });
+
+//   return fullQuery;
+// }

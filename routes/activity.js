@@ -5,6 +5,7 @@ import {
   searchActivities,
   getActivityDetail,
   attendActivity,
+  getActivities,
 } from '../controllers/activity';
 import userAuth from '../middleware/auth';
 import upload from '../middleware/multer';
@@ -21,5 +22,6 @@ router.patch('/activity/attend/:id', userAuth, attendActivity);
 router.get('/activity/search', searchActivities);
 router.get('/activity/detail/:id', getActivityDetail);
 router.get('/activity/types', getTypes);
+router.get('/activities/', getActivities);
 
 export default router;
