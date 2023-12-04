@@ -37,8 +37,6 @@ const CreateActivityPage = () => {
             lat: location.lat(),
             lng: location.lng(),
           });
-          document.getElementById("latitude").value = center.lat;
-          document.getElementById("longitude").value = center.lng;
         }
       });
     }
@@ -169,8 +167,18 @@ const CreateActivityPage = () => {
             <></>
           )}
 
-          <input type="hidden" id="latitude" name="latitude" />
-          <input type="hidden" id="longitude" name="longitude" />
+          <input
+            type="hidden"
+            id="latitude"
+            name="latitude"
+            value={center.lat}
+          />
+          <input
+            type="hidden"
+            id="longitude"
+            name="longitude"
+            value={center.lng}
+          />
         </div>
 
         <div className="mb-4">
