@@ -106,7 +106,7 @@ export async function getUser(req, res, next) {
 
 export async function getActivities(req, res, next) {
   try {
-    const activities = await getUserActivities(res.locals.user.id);
+    const activities = await getUserActivities(res.locals.user.id, req.query);
     return res.status(200).json({
       activities,
     });
