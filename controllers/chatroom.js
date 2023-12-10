@@ -6,11 +6,7 @@ export async function createChatroom(req, res, next) {
     const userId2 = req.body.userId;
 
     const isPrivate = true;
-    let chatroomId = await chatroomModel.getChatroom(
-      userId1,
-      userId2,
-      isPrivate,
-    );
+    let chatroomId = await chatroomModel.getChatroom(userId1, userId2, isPrivate);
 
     if (chatroomId) {
       return res.json(chatroomId);
@@ -19,7 +15,7 @@ export async function createChatroom(req, res, next) {
     chatroomId = await chatroomModel.createChatroom(isPrivate);
     await chatroomModel.createChatroomUser(chatroomId, [userId1, userId2]);
 
-    return res.json(chatroomId);
+    return res.json({ chatroomId });
   } catch (err) {
     next(err);
   }

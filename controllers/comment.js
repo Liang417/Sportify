@@ -23,14 +23,12 @@ export async function createComment(req, res, next) {
       .map((attendee) => (attendee.user_id !== userId ? attendee.user_id : null))
       .filter((id) => id !== null);
 
-    const notificationContent = `New comment from ${res.locals.user.name} on your activity`;
+    if (attendeesIds.length > 0) {
+      const notificationContent = `New comment from ${res.locals.user.name} on your activity`;
+      await createNotification(attendeesIds, activityId, notificationContent);
+    }
 
-    await createNotification(attendeesIds, activityId, notificationContent);
-    const comment = await commentModel.createComment(
-      activityId,
-      userId,
-      content,
-    );
+    const comment = await commentModel.createComment(activityId, userId, content);
     return res.status(201).json({ comment });
   } catch (err) {
     next(err);

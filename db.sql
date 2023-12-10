@@ -74,7 +74,7 @@ CREATE TABLE "message" (
 CREATE TABLE "notification" (
   id BIGSERIAL PRIMARY KEY,
   receiver_id INT REFERENCES "user" (id),
-  activity_id INT REFERENCES "activity" (id),
+  activity_id INT,
   content TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );

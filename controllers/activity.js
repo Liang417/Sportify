@@ -12,7 +12,7 @@ export async function createActivity(req, res) {
     const pictureFilename = picture[0].filename;
     const isPrivate = false;
 
-    const chatroomId = await chatroomModel.createChatroom(isPrivate);
+    const chatroomId = await chatroomModel.createChatroom(isPrivate, req.body.title);
     const newActivity = await activityModel.createActivity(
       req.body,
       hostId,
@@ -76,13 +76,16 @@ export async function attendActivity(req, res) {
     }
 
     await activityUserModel.insertUser(activityId, userId, connection);
+
     await chatroomModel.createChatroomUser(chatroomId, [userId], connection);
 
     const attendees = await activityUserModel.getActivityAttendees(activityId);
-    const attendeesIds = attendees.map((attendee) => (attendee.user_id !== userId ? attendee.user_id : null));
+
+    const attendeesIds = attendees
+      .filter((attendee) => attendee.user_id !== userId)
+      .map((attendee) => attendee.user_id);
 
     const content = `New attendee ${res.locals.user.name} join your activity`;
-
     await notificationModel.createNotification(attendeesIds, activityId, content, connection);
 
     const isSuccess = await activityModel.incrementAttendance(activityId, connection);
@@ -99,6 +102,54 @@ export async function attendActivity(req, res) {
     res.status(500).json({ errors: err });
   } finally {
     connection.release();
+  }
+}
+
+export async function cancelAttendActivity(req, res) {
+  try {
+    const activityId = req.params.id;
+    const userId = res.locals.user.id;
+    const { chatroomId } = req.body;
+
+    await activityUserModel.deleteUser(activityId, userId);
+    await chatroomModel.deleteChatroomUser(chatroomId, [userId]);
+    await activityModel.decrementAttendance(activityId);
+    const attendees = await activityUserModel.getActivityAttendees(activityId);
+    const attendeesIds = attendees
+      .filter((attendee) => attendee.user_id !== userId)
+      .map((attendee) => attendee.user_id);
+
+    const content = `${res.locals.user.name} 取消參加活動`;
+
+    await notificationModel.createNotification(attendeesIds, activityId, content);
+
+    res.status(200).json({ message: 'Cancelled attendance successfully' });
+  } catch (err) {
+    res.status(500).json({ errors: err });
+  }
+}
+
+export async function deleteActivity(req, res) {
+  try {
+    const activityId = req.params.id;
+    const userId = res.locals.user.id;
+
+    const activityDetail = await activityModel.getActivityDetail(activityId);
+
+    if (activityDetail.host_id !== userId) return res.status(401).json({ errors: 'You are not the host of this activity' });
+
+    const attendees = await activityUserModel.getActivityAttendees(activityId);
+    const attendeesIds = attendees.map((attendee) => attendee.user_id);
+    await activityUserModel.deleteUsers(activityId);
+    await chatroomModel.deleteChatroomUsers(activityDetail.chatroom_id);
+    await activityModel.deleteActivity(activityId);
+
+    const content = `您參與的活動${activityDetail.title}已由主辦人刪除`;
+    await notificationModel.createNotification(attendeesIds, activityId, content);
+
+    res.status(200).json({ message: 'Cancelled attendance successfully' });
+  } catch (err) {
+    res.status(500).json({ errors: err });
   }
 }
 
