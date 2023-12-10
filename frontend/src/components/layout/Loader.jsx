@@ -1,5 +1,5 @@
 import Lottie from "lottie-react";
-import animationData from "../../assets/124016-coding-time.json";
+import animationData from "../../assets/Animation - 1702020620750.json";
 
 const Loader = () => {
   const style = {
@@ -8,7 +8,7 @@ const Loader = () => {
   };
 
   return (
-    <div className="w-full h-screen flex items-center justify-center">
+    <div className="w-full flex items-center justify-center">
       <Lottie animationData={animationData} style={style} />
     </div>
   );

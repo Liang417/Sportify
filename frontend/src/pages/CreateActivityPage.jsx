@@ -3,14 +3,36 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { toast } from "react-toastify";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import moment from "moment";
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import Header from "../components/layout/Header";
+import { useNavigate } from "react-router-dom";
 
 const CreateActivityPage = () => {
-  const [activityTypes, setActivityTypes] = useState([]);
-  const [tags, setTags] = useState([]);
+  const [typeOptions, setTypeOptions] = useState([]);
   const [tagOptions, setTagOptions] = useState([]);
   const [libraries] = useState(["places"]);
   const [center, setCenter] = useState({ lat: 25.03746, lng: 121.564558 });
   const autocompleteInputRef = useRef(null);
+  const [startFrom, setStartFrom] = useState(null);
+  const [endAt, setEndAt] = useState(null);
+  const [dateline, setDeadline] = useState(null);
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const navigate = useNavigate();
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
     libraries,
@@ -18,7 +40,7 @@ const CreateActivityPage = () => {
   });
 
   useEffect(() => {
-    getActivityTypes().then(setActivityTypes);
+    getTypesOptions().then(setTypeOptions);
     getTags().then(setTagOptions);
   }, []);
 
@@ -37,12 +59,14 @@ const CreateActivityPage = () => {
             lat: location.lat(),
             lng: location.lng(),
           });
+          setLatitude(location.lat());
+          setLongitude(location.lng());
         }
       });
     }
   }, [isLoaded]);
 
-  const getActivityTypes = async () => {
+  const getTypesOptions = async () => {
     const response = await fetch(
       `${import.meta.env.VITE_API_URL}/activity/types`
     );
@@ -59,14 +83,20 @@ const CreateActivityPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (
-      !document.getElementById("latitude").value ||
-      !document.getElementById("longitude").value
-    )
-      return toast.error("Please choice location on the map.");
+    if (!longitude || !latitude)
+      return toast.error("請從GoogleMap下拉式選單中選取地圖位置");
 
     const formData = new FormData(event.target);
-    formData.append("tags", JSON.stringify(tags));
+
+    formData.append("tags", JSON.stringify(selectedTags));
+    formData.append(
+      "startFrom",
+      moment(startFrom).format("YYYY-MM-DD HH:mm:ss")
+    );
+    formData.append("endAt", moment(endAt).format("YYYY-MM-DD HH:mm:ss"));
+    formData.append("dateline", moment(dateline).format("YYYY-MM-DD HH:mm:ss"));
+    formData.append("latitude", latitude);
+    formData.append("longitude", longitude);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/activity`, {
@@ -74,9 +104,12 @@ const CreateActivityPage = () => {
         body: formData,
         credentials: "include",
       });
-
       if (response.ok) {
         toast.success("Activity created successfully");
+        setTimeout(async () => {
+          const { id } = await response.json();
+          navigate(`/activity/detail/${id}`);
+        }, 1000);
       } else {
         toast.error("Error creating activity");
       }
@@ -86,70 +119,58 @@ const CreateActivityPage = () => {
   };
 
   return (
-    <div className="bg-gray-100 p-8">
-      <form
-        onSubmit={handleSubmit}
-        encType="multipart/form-data"
-        className="max-w-2xl mx-auto bg-white p-6 rounded-md shadow-md flex flex-col item-center justify-center"
+    <div>
+      <div>
+        <Header />
+      </div>
+      <Box
+        className="bg-gray-100 p-8"
+        sx={{ "& .MuiTextField-root": { mb: 2, width: "100%" } }}
       >
-        <h2 className="text-2xl font-bold mb-4 text-center">建立活動</h2>
-
-        <div className="mb-4">
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-600"
-          >
-            標題:
-          </label>
-          <input
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          encType="multipart/form-data"
+          className="max-w-2xl mx-auto bg-white p-6 rounded-md shadow-md flex flex-col item-center justify-center"
+          autoComplete="off"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-center">建立活動</h2>
+          <TextField
+            label="標題"
             type="text"
             id="title"
             name="title"
             required
-            className="mt-1 p-2 w-full border rounded-md"
           />
-        </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="type"
-            className="block text-sm font-medium text-gray-600"
-          >
-            類型:
-          </label>
-          <select
-            id="type"
-            name="typeId"
-            className="mt-1 p-2 w-full border rounded-md"
-            required
-          >
-            <option value="" className="bg-gray-100">
-              選擇活動種類
-            </option>
-            {activityTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          <FormControl>
+            <Select
+              id="type"
+              name="typeId"
+              required
+              value={selectedType}
+              displayEmpty
+              onChange={(e) => setSelectedType(e.target.value)}
+              sx={{ mb: 2 }}
+            >
+              <MenuItem value="" disabled>
+                選擇活動種類
+              </MenuItem>
+              {typeOptions?.map((type) => (
+                <MenuItem key={type.id} value={type.id}>
+                  {type.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-        <div className="mb-4">
-          <label
-            htmlFor="search_location"
-            className="block text-sm font-medium text-gray-600"
-          >
-            地點:
-          </label>
-          <input
+          <TextField
+            label="地點"
             id="search_location"
-            ref={autocompleteInputRef}
-            type="text"
             name="locationName"
             placeholder="Enter a location"
-            className="mt-1 p-2 w-full border rounded-md mb-4"
-            autoComplete="off"
             required
+            inputRef={autocompleteInputRef}
           />
           {isLoaded ? (
             <GoogleMap
@@ -167,124 +188,89 @@ const CreateActivityPage = () => {
             <></>
           )}
 
-          <input
-            type="hidden"
-            id="latitude"
-            name="latitude"
-            value={center.lat}
-          />
-          <input
-            type="hidden"
-            id="longitude"
-            name="longitude"
-            value={center.lng}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="price"
-            className="block text-sm font-medium text-gray-600"
-          >
-            費用:
-          </label>
-          <input
+          <TextField
+            label="費用"
             type="number"
             id="price"
             name="price"
             required
-            className="mt-1 p-2 w-full border rounded-md"
+            InputProps={{ inputProps: { min: 0, max: 10000, step: 1 } }}
+            sx={{ mt: 2 }}
           />
-        </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="attendeesLimit"
-            className="block text-sm font-medium text-gray-600"
-          >
-            參加人數限制:
-          </label>
-          <input
+          <TextField
+            label="參加人數限制"
             type="number"
             id="attendeesLimit"
             name="attendeesLimit"
             required
-            className="mt-1 p-2 w-full border rounded-md"
+            InputProps={{ inputProps: { min: 1, max: 500 } }}
           />
-        </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="startFrom"
-            className="block text-sm font-medium text-gray-600"
-          >
-            活動開始時間:
-          </label>
-          <input
-            type="datetime-local"
-            id="startFrom"
-            name="startFrom"
-            required
-            className="mt-1 p-2 w-full border rounded-md"
-          />
-        </div>
+          <LocalizationProvider dateAdapter={AdapterMoment}>
+            <DemoContainer components={["DateTimePicker"]}>
+              <FormControl>
+                <InputLabel htmlFor="startFrom"></InputLabel>
+                <DateTimePicker
+                  id="startFrom"
+                  value={startFrom}
+                  label="選擇活動開始日期"
+                  onChange={(newValue) => {
+                    setStartFrom(newValue);
+                  }}
+                  views={["year", "day", "hours", "minutes"]}
+                  disablePast
+                  required
+                />
+              </FormControl>
 
-        <div className="mb-4">
-          <label
-            htmlFor="endAt"
-            className="block text-sm font-medium text-gray-600"
-          >
-            活動結束時間:
-          </label>
-          <input
-            type="datetime-local"
-            id="endAt"
-            name="endAt"
-            required
-            className="mt-1 p-2 w-full border rounded-md"
-          />
-        </div>
+              <FormControl>
+                <DateTimePicker
+                  id="endAt"
+                  label="選擇活動結束日期"
+                  value={endAt}
+                  onChange={(newValue) => setEndAt(newValue)}
+                  views={["year", "day", "hours", "minutes"]}
+                  minDateTime={
+                    startFrom ? moment(startFrom).add(30, "minutes") : startFrom
+                  }
+                  required
+                  disabled={!startFrom}
+                />
+              </FormControl>
 
-        <div className="mb-4">
-          <label
-            htmlFor="dateline"
-            className="block text-sm font-medium text-gray-600"
-          >
-            報名截止日:
-          </label>
-          <input
-            type="datetime-local"
-            id="dateline"
-            name="dateline"
-            required
-            className="mt-1 p-2 w-full border rounded-md"
-          />
-        </div>
+              <FormControl>
+                <DateTimePicker
+                  id="dateline"
+                  value={dateline}
+                  label="選擇報名截止日期"
+                  onChange={(newValue) => setDeadline(newValue)}
+                  views={["year", "day", "hours", "minutes"]}
+                  required
+                  minDateTime={moment()}
+                  maxDateTime={
+                    startFrom
+                      ? moment(startFrom).subtract(15, "minutes")
+                      : startFrom
+                  }
+                  disabled={!startFrom}
+                />
+              </FormControl>
+            </DemoContainer>
+          </LocalizationProvider>
 
-        <div className="mb-4">
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-600"
-          >
-            活動說明:
-          </label>
-          <textarea
+          <TextField
+            label="活動說明"
             id="description"
             name="description"
-            cols="50"
-            rows="10"
             required
-            className="mt-1 p-2 w-full border rounded-md"
-          ></textarea>
-        </div>
+            multiline
+            minRows={10}
+            InputProps={{
+              style: { whiteSpace: "pre-line" },
+            }}
+          />
 
-        <div className="mb-4">
-          <label
-            htmlFor="tags"
-            className="block text-sm font-medium text-gray-600"
-          >
-            標籤 (最多 5 個):
-          </label>
           <Autocomplete
             multiple
             id="tags"
@@ -293,33 +279,37 @@ const CreateActivityPage = () => {
             renderInput={(params) => (
               <TextField {...params} variant="outlined" placeholder="Tags" />
             )}
-            value={tags}
+            value={selectedTags}
             onChange={(event, newValue) => {
-              setTags(newValue);
+              setSelectedTags(newValue);
             }}
           />
-        </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-600">
-            上傳圖片:
-          </label>
-          <input
-            type="file"
-            id="picture"
-            name="picture"
-            accept="image/*"
-            className="mt-1 p-2 w-full border rounded-md"
-            required
-          />
-        </div>
+          <Button
+            variant="contained"
+            component="label"
+            sx={{ mt: 2, fontSize: "20px" }}
+          >
+            上傳圖片
+            <input
+              type="file"
+              id="picture"
+              name="picture"
+              accept="image/*"
+              required
+            />
+          </Button>
 
-        <input
-          type="submit"
-          value="Create Activity"
-          className="mt-4 bg-blue-500 text-white p-2 rounded-md cursor-pointer hover:bg-green-500"
-        />
-      </form>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ mt: 2, fontSize: "20px" }}
+          >
+            發佈活動
+          </Button>
+        </Box>
+      </Box>
     </div>
   );
 };

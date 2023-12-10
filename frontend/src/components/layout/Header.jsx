@@ -1,6 +1,6 @@
+import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
 import { TiMessages } from "react-icons/ti";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { MdEventNote } from "react-icons/md";
@@ -9,6 +9,7 @@ import { CiSearch } from "react-icons/ci";
 import { BiMessageRoundedCheck } from "react-icons/bi";
 
 const Header = () => {
+  const { isAuthenticated, user } = useSelector((state) => state.user);
   const [openNotification, setOpenNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
@@ -55,7 +56,7 @@ const Header = () => {
         </div>
 
         <div className="h-full flex justify-between items-center mr-10">
-          <div className="flex gap-10 justify-center items-end text-[#313538] text-[17px] font-semibold">
+          <div className="flex gap-10 justify-center items-center text-[#313538] text-[17px] font-semibold">
             <Link to="/activity">
               <MdEventNote size={30} />
             </Link>
@@ -75,29 +76,32 @@ const Header = () => {
                 <ul className="list-none m-0 p-0">
                   {notifications?.length > 0 ? (
                     notifications?.map((notification) => (
-                      <li
-                        key={notification.id}
-                        className="border-b last:border-b-0 hover:bg-gray-100 cursor-pointer"
-                      >
-                        <div className="flex items-center px-6 py-4">
-                          <div className="mr-3">
-                            <BiMessageRoundedCheck
-                              className="text-green-500"
-                              size={24}
-                            />
-                          </div>
-                          <div className="leading-8">
-                            <p className="font-medium text-gray-900">
-                              {notification.content}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(
-                                notification.created_at
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
+                      <div key={notification.id}>
+                        <Link
+                          to={`/activity/detail/${notification.activity_id}`}
+                        >
+                          <li className="border-b last:border-b-0 hover:bg-gray-100 cursor-pointer">
+                            <div className="flex items-center px-6 py-4">
+                              <div className="mr-3">
+                                <BiMessageRoundedCheck
+                                  className="text-green-500"
+                                  size={24}
+                                />
+                              </div>
+                              <div className="leading-8">
+                                <p className="font-medium text-gray-900">
+                                  {notification.content}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(
+                                    notification.created_at
+                                  ).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </li>
+                        </Link>
+                      </div>
                     ))
                   ) : (
                     <li className="text-center px-4 py-3">No notifications</li>
@@ -107,7 +111,15 @@ const Header = () => {
             )}
 
             <Link to="/user/profile">
-              <CgProfile size={30} />
+              {isAuthenticated ? (
+                <img
+                  src={`${import.meta.env.VITE_UPLOAD_URL}/${user?.avatar}`}
+                  alt="avatar"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <CgProfile size={30} />
+              )}
             </Link>
           </div>
         </div>

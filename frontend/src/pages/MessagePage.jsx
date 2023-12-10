@@ -2,22 +2,47 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../components/layout/Header";
 import socketIO from "socket.io-client";
 import { useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 const socket = socketIO(`${import.meta.env.VITE_SOCKET}`, {
   transports: ["websocket"],
 });
 
 const MessagePage = () => {
   const { user } = useSelector((state) => state.user);
+  const location = useLocation();
   const [privateChatrooms, setPrivateChatrooms] = useState([]);
   const [groupChatrooms, setGroupChatrooms] = useState([]);
   const [activeChatroom, setActiveChatroom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const type = queryParams.get("type");
+  const chatroomId = queryParams.get("chatroomId");
 
   useEffect(() => {
-    fetchPrivateChatrooms();
-  }, []);
+    const test = async () => {
+      if (type === "group") {
+        await fetchGroupChatrooms();
+      } else {
+        await fetchPrivateChatrooms();
+      }
+    };
+    test();
+  }, [location, type]);
+
+  useEffect(() => {
+    if (chatroomId) {
+      setActiveChatroom(
+        privateChatrooms.find(
+          (chatroom) => String(chatroom.id) === chatroomId
+        ) ||
+          groupChatrooms.find((chatroom) => String(chatroom.id) === chatroomId)
+      );
+      fetchMessages(chatroomId);
+    }
+  }, [privateChatrooms, groupChatrooms, location, chatroomId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -34,7 +59,7 @@ const MessagePage = () => {
     }
   }, [activeChatroom]);
 
-  const fetchPrivateChatrooms = () => {
+  const fetchPrivateChatrooms = async () => {
     setPrivateChatrooms([]);
     setGroupChatrooms([]);
     setActiveChatroom(null);
@@ -45,7 +70,7 @@ const MessagePage = () => {
       .then((data) => setPrivateChatrooms(data.privateChatrooms));
   };
 
-  const fetchGroupChatrooms = () => {
+  const fetchGroupChatrooms = async () => {
     setPrivateChatrooms([]);
     setGroupChatrooms([]);
     setActiveChatroom(null);
@@ -56,7 +81,7 @@ const MessagePage = () => {
       .then((data) => setGroupChatrooms(data.groupChatrooms));
   };
 
-  const fetchMessages = (chatroomId) => {
+  const fetchMessages = async (chatroomId) => {
     fetch(`${import.meta.env.VITE_API_URL}/messages/${chatroomId}`, {
       credentials: "include",
     })
@@ -65,8 +90,7 @@ const MessagePage = () => {
   };
 
   const handleRoomClick = (chatroom) => {
-    setActiveChatroom(chatroom);
-    fetchMessages(chatroom.id);
+    navigate(`/message?type=${type}&chatroomId=${chatroom.id}`);
   };
 
   const sendMessage = () => {
@@ -107,13 +131,14 @@ const MessagePage = () => {
         <div className="w-full p-4">
           <div className="flex items-center justify-evenly">
             <button
-              onClick={() => fetchPrivateChatrooms()}
+              onClick={() => navigate("/message?type=private")}
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 w-1/3 rounded-full"
             >
               私人訊息
             </button>
+
             <button
-              onClick={() => fetchGroupChatrooms()}
+              onClick={() => navigate("/message?type=group")}
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 w-1/3 rounded-full"
             >
               群組訊息
@@ -151,7 +176,7 @@ const MessagePage = () => {
                         : "hover:bg-gray-200"
                     } rounded cursor-pointer border-b`}
                   >
-                    Chatroom_{chatroom.id}
+                    {chatroom.name}
                   </li>
                 ))}
             </ul>
@@ -160,7 +185,7 @@ const MessagePage = () => {
           {activeChatroom ? (
             <div className="w-full border-y-2 border-r-2">
               <div className="bg-green-200 p-4 mb-4 rounded text-lg text-center">
-                {activeChatroom.name || `Group ${activeChatroom.id}`}
+                {activeChatroom.name}
               </div>
               <div className="overflow-auto mb-4 h-[70%]">
                 {messages &&

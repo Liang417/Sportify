@@ -34,8 +34,7 @@ const ActivityCard = ({ activity }) => {
               {activity.location_name}
             </div>
             <div className="text-sm text-gray-500 mt-2">
-              {activity.current_attendees_count} attendee
-              {activity.current_attendees_count !== 1 && "s"}
+              {activity.current_attendees_count} 位參加者
             </div>
           </div>
         </div>

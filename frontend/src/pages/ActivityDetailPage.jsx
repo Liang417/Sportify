@@ -1,12 +1,22 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Header from "../components/layout/Header";
 import { useState, useEffect, useRef } from "react";
 import { LuMapPin } from "react-icons/lu";
 import { SlCalender } from "react-icons/sl";
+import { AiOutlineMessage } from "react-icons/ai";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { BiMessage } from "react-icons/bi";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
+import Loader from "../components/layout/Loader";
 
 const ActivityDetailPage = () => {
   const { id } = useParams();
@@ -16,6 +26,9 @@ const ActivityDetailPage = () => {
   const [spots, setSpots] = useState(0);
   const [libraries] = useState(["places"]);
   const latestCommentRef = useRef(null);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const formatDate = (dateString) => {
     const options = {
@@ -36,13 +49,23 @@ const ActivityDetailPage = () => {
 
   useEffect(() => {
     const getActivityDetail = async () => {
+      setLoading(true);
       fetch(`${import.meta.env.VITE_API_URL}/activity/detail/${id}`, {
         credentials: "include",
       })
         .then((response) => response.json())
         .then((data) => {
+          if (data.errors) {
+            return setDetail(null);
+          }
           setDetail(data);
           setSpots(data.attendees_limit - data.current_attendees_count);
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     };
     getActivityDetail();
@@ -97,7 +120,7 @@ const ActivityDetailPage = () => {
     if (!user) return toast.error("Please login first.");
 
     const result = await fetch(
-      `${import.meta.env.VITE_API_URL}/activity/attend/${id}`,
+      `${import.meta.env.VITE_API_URL}/activity/${id}/attend/`,
       {
         method: "PATCH",
         credentials: "include",
@@ -120,16 +143,83 @@ const ActivityDetailPage = () => {
           },
         ],
       }));
+      setSpots((prevSpots) => prevSpots - 1);
       toast.success(message);
     } else {
       toast.error(errors);
     }
   };
 
+  const handleCancelAttend = async (id) => {
+    const result = await fetch(
+      `${import.meta.env.VITE_API_URL}/activity/${id}/cancel`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ chatroomId: detail.chatroom_id }),
+      }
+    );
+    const { message, errors } = await result.json();
+    if (result.ok) {
+      setDetail((prevDetail) => ({
+        ...prevDetail,
+        attendees: prevDetail.attendees.filter(
+          (attendee) => attendee.user_id !== user.id
+        ),
+      }));
+      setSpots((prevSpots) => prevSpots + 1);
+      toast.success(message);
+    } else {
+      toast.error(errors);
+    }
+  };
+
+  const handleDeleteActivity = async (id) => {
+    setOpen(false);
+    const result = await fetch(
+      `${import.meta.env.VITE_API_URL}/activity/${id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+    const { message, errors } = await result.json();
+    if (result.ok) {
+      toast.success(message);
+      navigate("/");
+    } else {
+      toast.error(errors);
+    }
+  };
+
+  const privateMessage = async (userId) => {
+    try {
+      const result = await fetch(`${import.meta.env.VITE_API_URL}/chatroom`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+      const chatroomId = await result.json();
+      navigate(`/message?type=private&chatroomId=${chatroomId}`);
+    } catch (err) {
+      toast.error("建立私人聊天室錯誤");
+    }
+  };
+
   return (
     <div>
       <Header />
-      {detail && (
+      {loading ? (
+        <div className="w-full h-[100vh] flex justify-center items-center bg-white">
+          <Loader />
+        </div>
+      ) : detail ? (
         <>
           <div className="px-5 py-6 w-full border-b-2 bg-white">
             <div className="max-w-[75vw] w-full mx-auto">
@@ -163,39 +253,30 @@ const ActivityDetailPage = () => {
                   <div className="max-w-2xl">
                     <div>
                       <div>
-                        <img
-                          id="picture"
-                          src={`${import.meta.env.VITE_UPLOAD_URL}/${
-                            detail.picture
-                          }`}
-                          alt="Activity Picture"
-                          className="mt-4 max-w-2xl rounded-sm"
-                        />
-                      </div>
-                      <div className="px-6 sm:px-4 xl:px-0 md:max-w-screen mt-5 w-full">
-                        <div className="mb-5 flex items-center justify-between">
-                          <h2 className="text-xl font-semibold">Details</h2>
+                        <div className="flex items-center justify-center">
+                          <img
+                            id="picture"
+                            src={`${import.meta.env.VITE_UPLOAD_URL}/${
+                              detail.picture
+                            }`}
+                            alt="Activity Picture"
+                            className="mt-4 w-[600px] rounded-md object-cover"
+                          />
                         </div>
-                        <div className="break-words">
-                          <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing
-                            elit. Natus molestiae aspernatur similique eveniet,
-                            ea repudiandae aut alias non consequatur voluptate
-                            exercitationem dolorem architecto mollitia labore
-                            obcaecati ipsam maiores, odio dolore? Lorem ipsum
-                            dolor sit amet consectetur adipisicing elit. Natus
-                            molestiae aspernatur similique eveniet, ea
-                            repudiandae aut alias non consequatur voluptate
-                            exercitationem dolorem architecto mollitia labore
-                            obcaecati ipsam maiores, odio dolore?
-                          </p>
+                      </div>
+                      <div className="mt-5 w-full">
+                        <div className="mb-5 flex items-center justify-between">
+                          <h2 className="text-xl font-semibold">活動詳情</h2>
+                        </div>
+                        <div className="break-words whitespace-pre-line overflow-ellipsis">
+                          <p>{detail.description}</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-5 w-full">
                       <div className="mb-5 flex items-center justify-between">
-                        <h2 className="text-xl font-semibold">Comments</h2>
+                        <h2 className="text-xl font-semibold">留言</h2>
                       </div>
 
                       <div id="comments-section" className="space-y-4 my-6">
@@ -216,11 +297,11 @@ const ActivityDetailPage = () => {
                               alt={`${comment.name}'s avatar`}
                               className="w-10 h-10 rounded-full object-cover"
                             />
-                            <div className="flex flex-col">
+                            <div className="flex flex-col max-w-[90%]">
                               <h5 className="text-lg font-bold">
                                 {comment.name}
                               </h5>
-                              <p className="text-gray-700 whitespace-pre-line">
+                              <p className="text-gray-700 whitespace-pre-line break-words">
                                 {comment.content}
                               </p>
                               <span className="text-xs text-gray-500 mt-2">
@@ -276,23 +357,25 @@ const ActivityDetailPage = () => {
                 <div className="w-[500px] mt-10">
                   <div className="bg-white px-5 pb-3 pt-6 sm:pb-4.5 py-5 rounded-2xl">
                     <div className="flex items-center">
-                      <div className="p-3 mr-3">
+                      <div className="p-3 mr-1">
                         <SlCalender className="w-[28px] h-[28px] text-red-500" />
                       </div>
-                      <div className="flex gap-5">
+                      <div className="flex gap-2">
                         <div>
-                          <div>Start:</div>
-                          <div>End:</div>
+                          <div className="mb-1">開始:</div>
+                          <div>結束:</div>
                         </div>
                         <div>
-                          <div>{formatDate(detail.start_from)}</div>
+                          <div className="mb-1">
+                            {formatDate(detail.start_from)}
+                          </div>
                           <div>{formatDate(detail.end_at)}</div>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center mt-3">
-                      <div className="p-3 mr-3">
+                      <div className="p-3 mr-1">
                         <LuMapPin className="w-[28px] h-[28px] text-red-500" />
                       </div>
                       <a
@@ -305,7 +388,7 @@ const ActivityDetailPage = () => {
                       </a>
                     </div>
 
-                    <div className="w-full h-[350px] p-3">
+                    <div className="w-full h-[350px] flex justify-center items-center p-3">
                       {isLoaded ? (
                         <GoogleMap
                           mapContainerStyle={{
@@ -331,7 +414,7 @@ const ActivityDetailPage = () => {
                     </div>
 
                     <div className="text-center text-[#008990] bg-white pb-4 pt-3 mt-4 rounded-2xl px-5 py-4 relative">
-                      <Link to="/">
+                      <Link to={`/message?type=group&chatroomId=${detail.chatroom_id}`}>
                         <button className="flex justify-center items-center rounded-lg border-2 border-[#008990] bg-white py-1 font-medium leading-8 w-full hover:bg-gray-100">
                           <div className="mr-3">
                             <BiMessage size={23} color="#008990" />
@@ -345,27 +428,41 @@ const ActivityDetailPage = () => {
                   <div>
                     <div className="mt-5 w-full max-h-[600px] overflow-auto">
                       <div className="mb-5 flex items-center justify-between">
-                        <h2 className="text-xl font-semibold">Attendees</h2>
+                        <h2 className="text-xl font-semibold">參加者</h2>
                       </div>
-                      <ul className="space-y-4">
-                        {detail.attendees.map((attendee, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center p-4 bg-white rounded-lg shadow"
-                          >
-                            <img
-                              src={`${import.meta.env.VITE_UPLOAD_URL}/${
-                                attendee.avatar
-                              }`}
-                              alt={`${attendee.name}'s avatar`}
-                              className="w-10 h-10 rounded-full mr-4 object-cover"
-                            />
-                            <div className="flex flex-col">
-                              <h5 className="font-bold">{attendee.name}</h5>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="overflow-y-auto max-h-[500px]">
+                        <ul className="grid grid-cols-3 gap-4">
+                          {detail.attendees.map((attendee, index) => (
+                            <li
+                              key={index}
+                              className="relative flex flex-col items-center w-full p-4 bg-white rounded-lg shadow"
+                            >
+                              {attendee.user_id !== user?.id && (
+                                <div
+                                  className="absolute top-0 right-0 mt-2 mr-2 text-blue-500 cursor-pointer"
+                                  onClick={() =>
+                                    privateMessage(attendee.user_id)
+                                  }
+                                >
+                                  <AiOutlineMessage size={25} />
+                                </div>
+                              )}
+                              <img
+                                src={`${import.meta.env.VITE_UPLOAD_URL}/${
+                                  attendee.avatar
+                                }`}
+                                alt={`${attendee.name}'s avatar`}
+                                className="w-[4.5rem] h-[4.5rem] rounded-full mb-2 object-cover"
+                              />
+                              <div className="flex flex-col w-full text-center">
+                                <h5 className="font-bold break-words">
+                                  {attendee.name}
+                                </h5>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -395,27 +492,92 @@ const ActivityDetailPage = () => {
                         >
                           {detail.price === 0 ? "Free" : detail.price + "$"}
                         </div>
-                        <div>{spots} spots left</div>
+                        <div>剩下{spots}位名額</div>
                       </div>
                     </div>
 
-                    <button
-                      className={`rounded-lg border px-8 py-2.5 w-[120px] font-semibold leading-8 text-white ${
-                        spots > 0
-                          ? "bg-green-500 hover:bg-green-600 cursor-pointer"
-                          : "bg-gray-500 hover:bg-gray-500 cursor-not-allowed"
-                      }`}
-                      onClick={() => handleAttend(id)}
-                      disabled={spots < 0}
-                    >
-                      {spots > 0 ? "Attend" : "Full"}
-                    </button>
+                    {new Date(detail.dateline) < new Date() ? (
+                      <button
+                        className="rounded-lg border px-8 py-2.5 w-[120px] font-semibold leading-8 text-white bg-gray-500 hover:bg-gray-500 cursor-not-allowed"
+                        aria-disabled
+                      >
+                        已結束
+                      </button>
+                    ) : user?.id === detail.host_id ? (
+                      <>
+                        <Button
+                          variant="outlined"
+                          onClick={() => setOpen(true)}
+                        >
+                          取消發佈
+                        </Button>
+                        <Dialog
+                          open={open}
+                          onClose={() => setOpen(false)}
+                          aria-labelledby="alert-dialog-title"
+                          aria-describedby="alert-dialog-description"
+                        >
+                          <DialogTitle id="alert-dialog-title">
+                            {"確認刪除"}
+                          </DialogTitle>
+                          <DialogContent>
+                            <DialogContentText id="alert-dialog-description">
+                              確定要刪除已發佈的活動嗎?
+                              <br />
+                              這將會移除所有參加者，並且刪除群組聊天室。
+                            </DialogContentText>
+                          </DialogContent>
+                          <DialogActions>
+                            <Button onClick={() => setOpen(false)}>取消</Button>
+                            <Button
+                              onClick={() => handleDeleteActivity(id)}
+                              autoFocus
+                            >
+                              確定
+                            </Button>
+                          </DialogActions>
+                        </Dialog>
+                      </>
+                    ) : detail?.attendees.some(
+                        (attendee) => attendee.user_id === user?.id
+                      ) ? (
+                      <button
+                        className="rounded-lg border px-8 py-2.5 font-semibold leading-8 text-white bg-red-500 hover:bg-red-600 cursor-pointer"
+                        onClick={() => handleCancelAttend(id)}
+                      >
+                        取消參加
+                      </button>
+                    ) : (
+                      <button
+                        className={`rounded-lg border px-8 py-2.5 font-semibold leading-8 text-white ${
+                          spots > 0
+                            ? "bg-green-500 hover:bg-green-600 cursor-pointer"
+                            : "bg-gray-500 hover:bg-gray-500 cursor-not-allowed"
+                        }`}
+                        onClick={() => handleAttend(id)}
+                        disabled={spots <= 0}
+                      >
+                        {spots > 0 ? "參加" : "已額滿"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-[85vh]">
+          <div className="text-4xl font-bold text-red-500 mb-4">
+            活動不存在或已被刪除
+          </div>
+          <p className="text-gray-500 text-lg mb-4">
+            很抱歉，您查詢的活動不存在或已被刪除
+          </p>
+          <Link to="/" className="text-blue-500 hover:underline text-lg">
+            返回首頁
+          </Link>
+        </div>
       )}
     </div>
   );
