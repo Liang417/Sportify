@@ -42,6 +42,10 @@ io.on('connection', (socket) => {
   });
 });
 
+app.get('*', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
 server.listen(process.env.PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`Server is running on ${process.env.PORT}`);

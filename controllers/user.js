@@ -104,6 +104,15 @@ export async function getUser(req, res, next) {
   }
 }
 
+export async function signOut(req, res, next) {
+  try {
+    res.clearCookie('jwtToken');
+    res.status(200).send('Sign out success');
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getActivities(req, res, next) {
   try {
     const activities = await getUserActivities(res.locals.user.id, req.query);
