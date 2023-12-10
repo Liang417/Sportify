@@ -6,6 +6,8 @@ import {
   getActivityDetail,
   attendActivity,
   getActivities,
+  cancelAttendActivity,
+  deleteActivity,
 } from '../controllers/activity';
 import userAuth from '../middleware/auth';
 import upload from '../middleware/multer';
@@ -18,7 +20,9 @@ router.post(
   userAuth,
   createActivity,
 );
-router.patch('/activity/attend/:id', userAuth, attendActivity);
+router.patch('/activity/:id/attend/', userAuth, attendActivity);
+router.patch('/activity/:id/cancel/', userAuth, cancelAttendActivity);
+router.delete('/activity/:id', userAuth, deleteActivity);
 router.get('/activity/search', searchActivities);
 router.get('/activity/detail/:id', getActivityDetail);
 router.get('/activity/types', getTypes);

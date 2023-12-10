@@ -12,6 +12,30 @@ export async function insertUser(activityId, userId, connection = pool) {
   return rows[0];
 }
 
+export async function deleteUser(activityId, userId) {
+  const { rows } = await pool.query(
+    `
+    DELETE FROM activity_user
+    WHERE activity_id = $1 AND user_id = $2
+    RETURNING *
+    `,
+    [activityId, userId],
+  );
+  return rows[0];
+}
+
+export async function deleteUsers(activityId) {
+  const { rows } = await pool.query(
+    `
+    DELETE FROM activity_user
+    WHERE activity_id = $1
+    RETURNING *
+    `,
+    [activityId],
+  );
+  return rows[0];
+}
+
 export async function getUser(activityId, userId) {
   const { rows } = await pool.query(
     `

@@ -142,6 +142,20 @@ export async function incrementAttendance(activityId, connection) {
   return rowCount > 0;
 }
 
+export async function decrementAttendance(activityId) {
+  const { rowCount } = await pool.query(
+    `
+      UPDATE activity
+      SET current_attendees_count = current_attendees_count - 1
+      WHERE id = $1
+      AND current_attendees_count - 1 >= 0
+      `,
+    [activityId],
+  );
+
+  return rowCount > 0;
+}
+
 export async function getActivities(query) {
   let baseQuery = 'SELECT * FROM activity';
   const queryParams = [];
@@ -180,19 +194,11 @@ export async function getActivities(query) {
 
   baseQuery += ' ORDER BY start_from ASC';
 
-  // const fullQuery = buildFullQueryString(baseQuery, queryParams);
-  // console.log('完整查詢字串:', fullQuery);
-
   const { rows } = await pool.query(baseQuery, queryParams);
   return rows;
 }
 
-// function buildFullQueryString(baseQuery, queryParams) {
-//   let fullQuery = baseQuery;
-
-//   queryParams.forEach((param, index) => {
-//     fullQuery = fullQuery.replace(new RegExp(`\\$${index + 1}`, 'g'), `${param}`);
-//   });
-
-//   return fullQuery;
-// }
+export const deleteActivity = async (id) => {
+  const { rowCount } = await pool.query('DELETE FROM activity WHERE id = $1', [id]);
+  return rowCount > 0;
+};
