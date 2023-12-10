@@ -5,6 +5,7 @@ import {
   getUser,
   getAllUsers,
   getActivities,
+  signOut,
 } from '../controllers/user';
 import upload from '../middleware/multer';
 import userAuth from '../middleware/auth';
@@ -20,5 +21,6 @@ router.post('/user/signin', signIn);
 router.get('/users/', getAllUsers);
 router.get('/user/', userAuth, getUser);
 router.get('/user/activities', userAuth, getActivities);
+router.get('/user/signout', signOut);
 
 export default router;
