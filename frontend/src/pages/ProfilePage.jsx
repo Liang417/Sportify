@@ -2,10 +2,16 @@ import Header from "../components/layout/Header";
 import { useEffect, useState } from "react";
 import ActivityCard from "../components/ActivityCard";
 import EmptyResult from "../components/layout/EmptyResult";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { getUser } from "../redux/slice/userSlice";
 
 const ProfilePage = () => {
   const [option, setOption] = useState("attending");
   const [activities, setActivities] = useState([]);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/user/activities?option=${option}`, {
@@ -16,6 +22,20 @@ const ProfilePage = () => {
         setActivities(data.activities);
       });
   }, [option]);
+
+  const handleLogout = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/user/signout`, {
+      credentials: "include",
+    }).then((response) => {
+      if (response.status === 200) {
+        toast.success("登出成功");
+        dispatch(getUser());
+        navigate("/");
+      }
+    });
+
+    return;
+  };
 
   return (
     <>
@@ -47,6 +67,10 @@ const ProfilePage = () => {
                 onClick={() => setOption("past")}
               >
                 過去的活動
+              </div>
+
+              <div className="cursor-pointer font-bold" onClick={handleLogout}>
+                登出
               </div>
             </div>
           </div>

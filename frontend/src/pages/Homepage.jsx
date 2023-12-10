@@ -7,10 +7,15 @@ import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import ActivityCard from "../components/ActivityCard";
 import { toast } from "react-toastify";
 import Search from "../components/layout/EmptyResult";
+import Loader from "../components/layout/Loader";
+import moment from "moment";
 
 const Homepage = () => {
+  const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    moment().format("YYYY-MM-DD HH:mm:ss")
+  );
   const [selectedDistance, setSelectedDistance] = useState("");
   const [selectPrice, setSelectPrice] = useState("");
   const [activities, setActivities] = useState([]);
@@ -74,6 +79,7 @@ const Homepage = () => {
   };
 
   const handleDistanceChange = async (value) => {
+    setLoading(true);
     try {
       const position = await getUserLocation();
       setCurrentLocation({
@@ -81,7 +87,10 @@ const Homepage = () => {
         lng: position.coords.longitude,
       });
       setSelectedDistance(value);
+
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       toast.error("請允許瀏覽器存取您的當前位置.");
     }
   };
@@ -104,6 +113,8 @@ const Homepage = () => {
             <LocalizationProvider dateAdapter={AdapterMoment}>
               <DateCalendar
                 className="border border-gray-300 font-bold rounded-md"
+                disablePast
+                defaultValue={moment()}
                 onChange={(newValue) => {
                   const formattedDate = newValue.format("YYYY-MM-DD HH:mm:ss");
                   setSelectedDate(formattedDate);
@@ -177,10 +188,10 @@ const Homepage = () => {
                     className="!rounded-full bg-gray-100 !font-semibold"
                   >
                     <MenuItem value={0}>Free</MenuItem>
-                    <MenuItem value={100}>100</MenuItem>
-                    <MenuItem value={200}>200</MenuItem>
-                    <MenuItem value={500}>500</MenuItem>
-                    <MenuItem value={1000}>1000</MenuItem>
+                    <MenuItem value={100}>100以下</MenuItem>
+                    <MenuItem value={200}>200以下</MenuItem>
+                    <MenuItem value={500}>500以下</MenuItem>
+                    <MenuItem value={1000}>1000以下</MenuItem>
                   </Select>
                 </FormControl>
               </div>
@@ -196,12 +207,14 @@ const Homepage = () => {
             </div>
 
             <div>
-              {activities?.length > 0 ? (
+              {loading ? (
+                <Loader />
+              ) : activities?.length > 0 ? (
                 activities.map((activity) => (
                   <ActivityCard key={activity.id} activity={activity} />
                 ))
               ) : (
-                <div className="mt-[-50px] text-center">
+                <div className="text-center">
                   <Search />
                   <p className="text-[20px]">沒有符合的活動</p>
                 </div>
