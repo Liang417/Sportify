@@ -1,6 +1,7 @@
 import { getActivityAttendees } from '../models/activity_user';
 import * as commentModel from '../models/comment';
 import { createNotification } from '../models/notification';
+import { getIO } from '../socket';
 
 export async function getComments(req, res, next) {
   try {
@@ -16,7 +17,7 @@ export async function createComment(req, res, next) {
   try {
     const userId = res.locals.user.id;
     const { activityId } = req.params;
-    const { content } = req.body;
+    const { content, title } = req.body;
 
     const attendees = await getActivityAttendees(activityId);
     const attendeesIds = attendees
@@ -24,8 +25,13 @@ export async function createComment(req, res, next) {
       .filter((id) => id !== null);
 
     if (attendeesIds.length > 0) {
-      const notificationContent = `New comment from ${res.locals.user.name} on your activity`;
-      await createNotification(attendeesIds, activityId, notificationContent);
+      const notificationContent = `您參與的活動「${title}」有新的留言`;
+      const notifications = await createNotification(attendeesIds, activityId, notificationContent);
+      const io = getIO();
+      notifications.forEach((notification) => {
+        const roomName = `user-${notification.receiver_id}`;
+        io.to(roomName).emit('getNotification', notification);
+      });
     }
 
     const comment = await commentModel.createComment(activityId, userId, content);

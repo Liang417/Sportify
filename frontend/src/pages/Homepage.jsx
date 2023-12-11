@@ -115,6 +115,7 @@ const Homepage = () => {
                 className="border border-gray-300 font-bold rounded-md"
                 disablePast
                 defaultValue={moment()}
+                value={moment()}
                 onChange={(newValue) => {
                   const formattedDate = newValue.format("YYYY-MM-DD HH:mm:ss");
                   setSelectedDate(formattedDate);

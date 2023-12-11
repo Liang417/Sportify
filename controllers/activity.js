@@ -4,6 +4,7 @@ import * as chatroomModel from '../models/chatroom';
 import * as commentModel from '../models/comment';
 import * as notificationModel from '../models/notification';
 import pool from '../models/databasePool';
+import { getIO } from '../socket';
 
 export async function createActivity(req, res) {
   try {
@@ -68,7 +69,7 @@ export async function attendActivity(req, res) {
     await connection.query('BEGIN');
     const activityId = req.params.id;
     const userId = res.locals.user.id;
-    const { chatroomId } = req.body;
+    const { chatroomId, title } = req.body;
     const user = await activityUserModel.getUser(activityId, userId);
 
     if (user) {
@@ -85,18 +86,29 @@ export async function attendActivity(req, res) {
       .filter((attendee) => attendee.user_id !== userId)
       .map((attendee) => attendee.user_id);
 
-    const content = `New attendee ${res.locals.user.name} join your activity`;
-    await notificationModel.createNotification(attendeesIds, activityId, content, connection);
+    const content = `您參與的活動「${title}」有新的使用者加入`;
+    const notifications = await notificationModel.createNotification(
+      attendeesIds,
+      activityId,
+      content,
+      connection,
+    );
 
     const isSuccess = await activityModel.incrementAttendance(activityId, connection);
 
     if (!isSuccess) {
       await connection.query('ROLLBACK');
-      return res.status(400).json({ errors: 'This activity has reached the attendees limit' });
+      return res.status(400).json({ errors: '這個活動已達到人數上限' });
     }
 
+    const io = getIO();
+    notifications.forEach((notification) => {
+      const roomName = `user-${notification.receiver_id}`;
+      io.to(roomName).emit('getNotification', notification);
+    });
+
     await connection.query('COMMIT');
-    res.status(200).json({ message: 'Attended activity successfully' });
+    res.status(200).json({ message: '參加成功' });
   } catch (err) {
     await connection.query('ROLLBACK');
     res.status(500).json({ errors: err });
@@ -109,7 +121,7 @@ export async function cancelAttendActivity(req, res) {
   try {
     const activityId = req.params.id;
     const userId = res.locals.user.id;
-    const { chatroomId } = req.body;
+    const { chatroomId, title } = req.body;
 
     await activityUserModel.deleteUser(activityId, userId);
     await chatroomModel.deleteChatroomUser(chatroomId, [userId]);
@@ -119,11 +131,20 @@ export async function cancelAttendActivity(req, res) {
       .filter((attendee) => attendee.user_id !== userId)
       .map((attendee) => attendee.user_id);
 
-    const content = `${res.locals.user.name} 取消參加活動`;
+    const content = `您參與的活動「${title}」有使用者取消出席`;
 
-    await notificationModel.createNotification(attendeesIds, activityId, content);
+    const notifications = await notificationModel.createNotification(
+      attendeesIds,
+      activityId,
+      content,
+    );
+    const io = getIO();
+    notifications.forEach((notification) => {
+      const roomName = `user-${notification.receiver_id}`;
+      io.to(roomName).emit('getNotification', notification);
+    });
 
-    res.status(200).json({ message: 'Cancelled attendance successfully' });
+    res.status(200).json({ message: '取消成功' });
   } catch (err) {
     res.status(500).json({ errors: err });
   }
@@ -136,7 +157,7 @@ export async function deleteActivity(req, res) {
 
     const activityDetail = await activityModel.getActivityDetail(activityId);
 
-    if (activityDetail.host_id !== userId) return res.status(401).json({ errors: 'You are not the host of this activity' });
+    if (activityDetail.host_id !== userId) return res.status(401).json({ errors: '活動的主辦人才可以刪除活動' });
 
     const attendees = await activityUserModel.getActivityAttendees(activityId);
     const attendeesIds = attendees.map((attendee) => attendee.user_id);
@@ -145,9 +166,18 @@ export async function deleteActivity(req, res) {
     await activityModel.deleteActivity(activityId);
 
     const content = `您參與的活動${activityDetail.title}已由主辦人刪除`;
-    await notificationModel.createNotification(attendeesIds, activityId, content);
+    const notifications = await notificationModel.createNotification(
+      attendeesIds,
+      activityId,
+      content,
+    );
+    const io = getIO();
+    notifications.forEach((notification) => {
+      const roomName = `user-${notification.receiver_id}`;
+      io.to(roomName).emit('getNotification', notification);
+    });
 
-    res.status(200).json({ message: 'Cancelled attendance successfully' });
+    res.status(200).json({ message: '活動刪除成功' });
   } catch (err) {
     res.status(500).json({ errors: err });
   }

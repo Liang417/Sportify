@@ -85,7 +85,7 @@ const ActivityDetailPage = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, title: detail.title }),
         }
       );
 
@@ -127,7 +127,10 @@ const ActivityDetailPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ chatroomId: detail.chatroom_id }),
+        body: JSON.stringify({
+          chatroomId: detail.chatroom_id,
+          title: detail.title,
+        }),
       }
     );
     const { message, errors } = await result.json();
@@ -159,7 +162,10 @@ const ActivityDetailPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ chatroomId: detail.chatroom_id }),
+        body: JSON.stringify({
+          chatroomId: detail.chatroom_id,
+          title: detail.title,
+        }),
       }
     );
     const { message, errors } = await result.json();
@@ -413,15 +419,28 @@ const ActivityDetailPage = () => {
                       )}
                     </div>
 
-                    <div className="text-center text-[#008990] bg-white pb-4 pt-3 mt-4 rounded-2xl px-5 py-4 relative">
-                      <Link to={`/message?type=group&chatroomId=${detail.chatroom_id}`}>
-                        <button className="flex justify-center items-center rounded-lg border-2 border-[#008990] bg-white py-1 font-medium leading-8 w-full hover:bg-gray-100">
+                    <div className="text-center font-bold bg-white pb-4 pt-3 mt-4 rounded-2xl px-5 py-4 relative">
+                      {detail?.attendees.some(
+                        (attendee) => attendee.user_id === user?.id
+                      ) ? (
+                        <Link
+                          to={`/message?type=group&chatroomId=${detail.chatroom_id}`}
+                        >
+                          <button className="flex justify-center items-center rounded-lg text-[#008990] border-2 border-[#008990] bg-white py-2 leading-8 w-full hover:bg-gray-100">
+                            <div className="mr-3">
+                              <BiMessage size={23} color="#008990" />
+                            </div>
+                            進入群組聊天
+                          </button>
+                        </Link>
+                      ) : (
+                        <button className="flex justify-center items-center rounded-lg text-white bg-gray-600 py-2 leading-8 w-full cursor-not-allowed opacity-50">
                           <div className="mr-3">
-                            <BiMessage size={23} color="#008990" />
+                            <BiMessage size={23} color="white" />
                           </div>
-                          Group Chat
+                          進入群組聊天(需成為活動參與者)
                         </button>
-                      </Link>
+                      )}
                     </div>
                   </div>
 
