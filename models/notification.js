@@ -2,9 +2,10 @@ import pool from './databasePool';
 
 export async function createNotification(receiverIds, activityId, content, connection = pool) {
   const values = receiverIds.map((id, index) => `($1, $2, $${index + 3})`).join(',');
-  const query = `INSERT INTO notification (content, activity_id, receiver_id) VALUES ${values}`;
+  const query = `INSERT INTO notification (content, activity_id, receiver_id) VALUES ${values} RETURNING *;`;
 
-  await connection.query(query, [content, activityId, ...receiverIds]);
+  const { rows } = await connection.query(query, [content, activityId, ...receiverIds]);
+  return rows;
 }
 
 export async function getNotifications(userId) {

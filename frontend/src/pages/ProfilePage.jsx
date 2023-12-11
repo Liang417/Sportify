@@ -42,7 +42,7 @@ const ProfilePage = () => {
       <Header />
       <div className="px-5 py-6 w-full min-h-screen bg-white">
         <div className="w-max-width mx-auto flex gap-10">
-          <div>
+          <div className="min-w-min">
             <div className="mx-3 space-y-4 rounded-lg bg-gray-100 p-[60px] mt-20 mb-10 text-gray-500">
               <div
                 className={`cursor-pointer font-bold ${
@@ -75,7 +75,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="min-w-[60%]">
+          <div className="w-[65%]">
             <h2 className="font-bold text-[40px]">我的活動</h2>
             <div>
               {activities?.length > 0 ? (

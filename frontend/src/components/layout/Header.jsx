@@ -7,11 +7,45 @@ import { MdEventNote } from "react-icons/md";
 import { CgProfile } from "react-icons/cg";
 import { CiSearch } from "react-icons/ci";
 import { BiMessageRoundedCheck } from "react-icons/bi";
+import socketIO from "socket.io-client";
+import { useRef } from "react";
 
 const Header = () => {
   const { isAuthenticated, user } = useSelector((state) => state.user);
   const [openNotification, setOpenNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
+  const notificationIconRef = useRef(null);
+  const notificationPopupRef = useRef(null);
+
+  const toggleNotification = (e) => {
+    e.stopPropagation();
+    setOpenNotification(!openNotification);
+    setHasNewNotification(false);
+  };
+
+  useEffect(() => {
+    if (user) {
+      const socket = socketIO(`${import.meta.env.VITE_SOCKET}`, {
+        transports: ["websocket"],
+      });
+
+      socket.emit("joinRoom", `user-${user.id}`);
+
+      socket.on("getNotification", (newNotification) => {
+        setNotifications((prevNotifications) => [
+          newNotification,
+          ...prevNotifications,
+        ]);
+        setHasNewNotification(true);
+      });
+
+      return () => {
+        socket.off("getNotification");
+        socket.disconnect();
+      };
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -31,28 +65,51 @@ const Header = () => {
 
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationPopupRef.current &&
+        !notificationPopupRef.current.contains(event.target) &&
+        !notificationIconRef.current.contains(event.target)
+      ) {
+        setOpenNotification(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div>
       <div className="bg-[#FFFFFF] flex justify-between items-center w-full h-[70px] relative">
-        <div className="flex justify-center items-center">
-          <div className="w-[430px] ml-6">
+        <div className="">
+          <div className="flex justify-center items-center ml-4">
             <Link to="/">
-              <img src="../images/logo.png" alt="Logo" className="h-[40px]" />
+              <img
+                src="../../../public/logo.png"
+                alt="Logo"
+                className="object-cover h-[70px]"
+              />
             </Link>
           </div>
-          <div className="relative mx-2">
-            <input
-              id="searchInput"
-              type="text"
-              className="w-[600px] py-2 px-10 border-2 border-[##979797] rounded-full focus:outline-none text-[#8B572A]"
-            />
-            <label
-              htmlFor="searchInput"
-              className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
-            >
-              <CiSearch size={30} />
-            </label>
-          </div>
+        </div>
+        <div className="relative mx-2">
+          <input
+            id="searchInput"
+            type="text"
+            className="w-[600px] py-2 px-10 border-2 border-[##979797] rounded-full focus:outline-none text-[#8B572A]"
+          />
+          <label
+            htmlFor="searchInput"
+            className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+          >
+            <CiSearch size={30} />
+          </label>
         </div>
 
         <div className="h-full flex justify-between items-center mr-10">
@@ -65,14 +122,22 @@ const Header = () => {
               <TiMessages size={30} />
             </Link>
 
-            <IoMdNotificationsOutline
-              size={30}
-              onClick={() => setOpenNotification(!openNotification)}
-              className="cursor-pointer"
-            />
+            <div className="relative" ref={notificationIconRef}>
+              <IoMdNotificationsOutline
+                size={30}
+                onClick={toggleNotification}
+                className="cursor-pointer"
+              />
+              {hasNewNotification && (
+                <div className="absolute bg-red-500 rounded-full w-2.5 h-2.5 top-2 right-2 transform translate-x-1/2 -translate-y-1/2"></div>
+              )}
+            </div>
 
             {openNotification && (
-              <div className="absolute right-[20px] top-[60px] mt-2 bg-white border-2 border-blue-300 shadow-2xl rounded-md w-120 z-10 max-h-[600px] overflow-y-scroll">
+              <div
+                className="max-w-[35vw] min-w-[30vw] absolute right-[20px] top-[60px] mt-2 bg-white border-2 border-blue-300 shadow-2xl rounded-md w-120 z-10 max-h-[600px] overflow-y-scroll"
+                ref={notificationPopupRef}
+              >
                 <ul className="list-none m-0 p-0">
                   {notifications?.length > 0 ? (
                     notifications?.map((notification) => (
@@ -104,7 +169,7 @@ const Header = () => {
                       </div>
                     ))
                   ) : (
-                    <li className="text-center px-4 py-3">No notifications</li>
+                    <li className="text-center px-4 py-3">沒有通知</li>
                   )}
                 </ul>
               </div>
