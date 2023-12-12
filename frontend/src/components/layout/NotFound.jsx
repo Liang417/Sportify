@@ -1,10 +1,10 @@
 import Lottie from "lottie-react";
 import animationData from "../../assets/Animation - 1701684469022.json";
 
-const EmptyResult = () => {
+const NotFound = () => {
   const style = {
     width: 400,
-    height: 400,
+    height: 300,
   };
 
   return (
@@ -14,4 +14,4 @@ const EmptyResult = () => {
   );
 };
 
-export default EmptyResult;
+export default NotFound;

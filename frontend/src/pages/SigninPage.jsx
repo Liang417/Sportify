@@ -27,7 +27,7 @@ const Signin = () => {
     );
     const response = await result.json();
     if (result.ok) {
-      toast.success("Login Success😎");
+      toast.success("登入成功");
       dispatch(getUser());
       navigate("/");
     } else {

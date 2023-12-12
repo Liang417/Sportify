@@ -1,7 +1,7 @@
 import Header from "../components/layout/Header";
 import { useEffect, useState } from "react";
 import ActivityCard from "../components/ActivityCard";
-import EmptyResult from "../components/layout/EmptyResult";
+import NotFound from "../components/layout/NotFound";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
@@ -84,7 +84,7 @@ const ProfilePage = () => {
                 ))
               ) : (
                 <div className="mt-[-50px] text-center">
-                  <EmptyResult />
+                  <NotFound />
                   <p className="text-[20px]">沒有符合的活動</p>
                 </div>
               )}

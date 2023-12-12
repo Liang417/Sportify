@@ -13,6 +13,7 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
 } from "@mui/material";
 import Header from "../components/layout/Header";
@@ -105,16 +106,16 @@ const CreateActivityPage = () => {
         credentials: "include",
       });
       if (response.ok) {
-        toast.success("Activity created successfully");
+        toast.success("活動發佈成功");
         setTimeout(async () => {
           const { id } = await response.json();
           navigate(`/activity/detail/${id}`);
         }, 1000);
       } else {
-        toast.error("Error creating activity");
+        toast.error("建立活動失敗");
       }
     } catch (error) {
-      toast.error("Error submitting form", error);
+      toast.error("建立活動失敗", error);
     }
   };
 
@@ -277,7 +278,15 @@ const CreateActivityPage = () => {
             options={tagOptions.map((option) => option.name)}
             freeSolo
             renderInput={(params) => (
-              <TextField {...params} variant="outlined" placeholder="Tags" />
+              <TextField
+                {...params}
+                variant="outlined"
+                placeholder="Tags"
+                label="Tags"
+              />
+            )}
+            PaperComponent={({ children }) => (
+              <Paper style={{ background: '#dddddd' }}>{children}</Paper>
             )}
             value={selectedTags}
             onChange={(event, newValue) => {
