@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,18 +11,42 @@ import { BiMessageRoundedCheck } from "react-icons/bi";
 import socketIO from "socket.io-client";
 import { useRef } from "react";
 
-const Header = () => {
+const Header = ({ setActivities }) => {
   const { isAuthenticated, user } = useSelector((state) => state.user);
   const [openNotification, setOpenNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [hasNewNotification, setHasNewNotification] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const notificationIconRef = useRef(null);
   const notificationPopupRef = useRef(null);
+  const navigate = useNavigate();
 
   const toggleNotification = (e) => {
     e.stopPropagation();
     setOpenNotification(!openNotification);
     setHasNewNotification(false);
+  };
+
+  const handleSearch = async () => {
+    if (searchInput.trim() === "") return;
+    if (!setActivities) {
+      return navigate("/", { state: { searchInput: searchInput } });
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/activities/search?query=${searchInput}`
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setActivities(result);
+      } else {
+        console.error("Search request failed");
+      }
+    } catch (error) {
+      console.error("Error while searching:", error);
+    }
   };
 
   useEffect(() => {
@@ -103,12 +128,20 @@ const Header = () => {
             id="searchInput"
             type="text"
             className="w-[600px] py-2 px-10 border-2 border-[##979797] rounded-full focus:outline-none text-[#8B572A]"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="輸入關鍵字、地點查詢活動"
+            onKeyUp={(event) => {
+              if (event.key === "Enter") {
+                handleSearch();
+              }
+            }}
           />
           <label
             htmlFor="searchInput"
             className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
           >
-            <CiSearch size={30} />
+            <CiSearch size={30} onClick={handleSearch} />
           </label>
         </div>
 

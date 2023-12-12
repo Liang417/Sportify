@@ -108,11 +108,15 @@ export async function getActivityDetail(id) {
       "user".id as host_id,
       "user".name as host_name,
       "user".email as host_email,
-      "user".avatar as host_avatar
+      "user".avatar as host_avatar,
+      array_agg(tag.name) as tags
     FROM activity
     JOIN activity_type ON activity.type_id = activity_type.id
     JOIN "user" ON activity.host_id = "user".id
+    JOIN activity_tag ON activity.id = activity_tag.activity_id
+    JOIN tag ON activity_tag.tag_id = tag.id 
     WHERE activity.id = $1
+    GROUP BY activity.id, "user".id, activity_type.name, ST_X(location::geometry), ST_Y(location::geometry)
   `,
     [id],
   );
@@ -157,7 +161,15 @@ export async function decrementAttendance(activityId) {
 }
 
 export async function getActivities(query) {
-  let baseQuery = 'SELECT * FROM activity';
+  let baseQuery = `
+  SELECT 
+    activity.*, 
+    array_agg(tag.name) AS tags
+  FROM activity 
+  JOIN activity_tag ON activity.id = activity_tag.activity_id
+  JOIN tag ON activity_tag.tag_id = tag.id 
+  JOIN activity_type ON activity.type_id = activity_type.id
+  `;
   const queryParams = [];
   const conditions = [];
 
@@ -192,7 +204,7 @@ export async function getActivities(query) {
     baseQuery += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  baseQuery += ' ORDER BY start_from ASC';
+  baseQuery += ' GROUP BY activity.id ORDER BY start_from ASC';
 
   const { rows } = await pool.query(baseQuery, queryParams);
   return rows;

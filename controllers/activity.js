@@ -1,8 +1,10 @@
+/* eslint-disable no-underscore-dangle */
 import * as activityModel from '../models/activity';
 import * as activityUserModel from '../models/activity_user';
 import * as chatroomModel from '../models/chatroom';
 import * as commentModel from '../models/comment';
 import * as notificationModel from '../models/notification';
+import * as tagModel from '../models/tag';
 import pool from '../models/databasePool';
 import { getIO } from '../socket';
 
@@ -12,6 +14,8 @@ export async function createActivity(req, res) {
     const { picture } = req.files;
     const pictureFilename = picture[0].filename;
     const isPrivate = false;
+    let { tags } = req.body;
+    tags = JSON.parse(tags);
 
     const chatroomId = await chatroomModel.createChatroom(isPrivate, req.body.title);
     const newActivity = await activityModel.createActivity(
@@ -24,6 +28,27 @@ export async function createActivity(req, res) {
     await chatroomModel.createChatroomUser(chatroomId, [hostId]);
     await activityUserModel.insertUser(newActivity.id, hostId);
 
+    const tagIds = await tagModel.getOrCreateTagIds(tags);
+    await tagModel.createActivityTags(newActivity.id, tagIds);
+
+    const elasticsearchData = {
+      id: newActivity.id,
+      title: newActivity.title,
+      current_attendees_count: newActivity.current_attendees_count,
+      start_from: newActivity.start_from,
+      picture: newActivity.picture,
+      location_name: newActivity.location_name,
+      tags,
+    };
+
+    await fetch(`http://localhost:9200/activities/_doc/${newActivity.id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(elasticsearchData),
+    });
+
     res.status(200).json(newActivity);
   } catch (err) {
     res.status(500).json({ errors: err });
@@ -32,7 +57,25 @@ export async function createActivity(req, res) {
 
 export async function searchActivities(req, res) {
   try {
-    const activities = await activityModel.searchActivities(req.query);
+    const { query } = req.query;
+
+    const response = await fetch('http://localhost:9200/activities/_search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: {
+          multi_match: {
+            query,
+            fields: ['title', 'tags', 'location_name'],
+          },
+        },
+      }),
+    });
+
+    const data = await response.json();
+    const activities = data.hits.hits.map((hit) => hit._source);
     res.status(200).json(activities);
   } catch (err) {
     res.status(500).json({ errors: err });
@@ -164,6 +207,10 @@ export async function deleteActivity(req, res) {
     await activityUserModel.deleteUsers(activityId);
     await chatroomModel.deleteChatroomUsers(activityDetail.chatroom_id);
     await activityModel.deleteActivity(activityId);
+
+    await fetch(`http://localhost:9200/activities/_doc/${activityId}`, {
+      method: 'DELETE',
+    });
 
     const content = `您參與的活動${activityDetail.title}已由主辦人刪除`;
     const notifications = await notificationModel.createNotification(

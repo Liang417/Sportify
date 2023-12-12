@@ -72,9 +72,9 @@ const ActivityDetailPage = () => {
   }, [id]);
 
   const handleSubmitComment = async (id) => {
-    if (!content.trim()) return toast.error("Please enter a comment.");
+    if (!content.trim()) return;
 
-    if (!user) return toast.error("Please login first.");
+    if (!user) return toast.error("請先登入");
 
     try {
       const response = await fetch(
@@ -106,18 +106,18 @@ const ActivityDetailPage = () => {
 
         setContent("");
       } else {
-        throw new Error("Failed to submit comment");
+        throw new Error("提交留言失敗");
       }
       if (latestCommentRef.current) {
         latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
       }
     } catch (err) {
-      toast.error("Failed to submit comment.");
+      toast.error("提交留言失敗");
     }
   };
 
   const handleAttend = async (id) => {
-    if (!user) return toast.error("Please login first.");
+    if (!user) return toast.error("請先登入");
 
     const result = await fetch(
       `${import.meta.env.VITE_API_URL}/activity/${id}/attend/`,
@@ -227,28 +227,29 @@ const ActivityDetailPage = () => {
         </div>
       ) : detail ? (
         <>
-          <div className="px-5 py-6 w-full border-b-2 bg-white">
+          <div className="px-5 py-4 w-full border-b-2 bg-white">
             <div className="max-w-[75vw] w-full mx-auto">
               <h1 className="overflow-hidden overflow-ellipsis text-3xl font-bold leading-snug">
                 {detail.title}
               </h1>
-              <Link to="/" className="block w-fit">
-                <div className="flex mt-5">
-                  <img
-                    src={`${import.meta.env.VITE_UPLOAD_URL}/${
-                      detail?.host_avatar
-                    }`}
-                    alt="host_avatar"
-                    className="h-[48px] w-[48px] rounded-full object-cover"
-                  />
-                  <div className="ml-6">
-                    <div>Hosted By:</div>
+
+              <div className="flex w-full mt-3 items-center">
+                <img
+                  src={`${import.meta.env.VITE_UPLOAD_URL}/${
+                    detail?.host_avatar
+                  }`}
+                  alt="host_avatar"
+                  className="h-[48px] w-[48px] rounded-full object-cover"
+                />
+                <div className="flex w-full items-center justify-between ml-6">
+                  <div className="w-[180px]">
+                    <div>活動主辦人：</div>
                     <div>
                       <span className="font-medium">{detail.host_name}</span>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
 
@@ -278,6 +279,17 @@ const ActivityDetailPage = () => {
                           <p>{detail.description}</p>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="my-7">
+                      {detail?.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-block py-1 px-3 mr-3  bg-green-500 rounded-full text-white text-sm"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
 
                     <div className="mt-5 w-full">
@@ -505,7 +517,7 @@ const ActivityDetailPage = () => {
                     <div className="flex items-center md:block">
                       <div className="flex flex-col">
                         <div
-                          className={`text-lg font-semibold ${
+                          className={`text-lg text-center font-semibold ${
                             detail.price === 0 ? "text-red-500" : "font-bold"
                           }`}
                         >

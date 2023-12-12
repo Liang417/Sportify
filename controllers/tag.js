@@ -9,11 +9,4 @@ export async function getTags(req, res, next) {
   }
 }
 
-export async function createTag(req, res, next) {
-  try {
-    const tag = await tagModel.createTag(req.body);
-    res.json({ tag });
-  } catch (err) {
-    next(err);
-  }
-}
+export default { getTags };

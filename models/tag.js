@@ -5,10 +5,46 @@ export async function getTags() {
   return rows;
 }
 
-export async function createTag(name) {
-  const { rows } = await pool.query(
-    'INSERT INTO tag (name) VALUES ($1) RETURNING *',
-    [name],
-  );
-  return rows[0];
+async function getTagIds(tagNames) {
+  const query = `SELECT id FROM tag WHERE name IN (${tagNames
+    .map((name) => `'${name}'`)
+    .join(', ')})`;
+  const { rows } = await pool.query(query);
+  const result = rows.map((row) => row.id);
+  return result;
+}
+
+async function createTags(tagNames) {
+  if (tagNames.length === 0) {
+    return [];
+  }
+
+  const values = tagNames.map((name) => `('${name}')`).join(', ');
+  const query = `
+      INSERT INTO tag (name)
+      VALUES ${values}
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `;
+  const { rows } = await pool.query(query);
+  const result = rows.map((row) => row.id);
+  return result;
+}
+
+export async function getOrCreateTagIds(tagNames) {
+  const existingTagIds = await getTagIds(tagNames);
+  const newTagIds = await createTags(tagNames);
+  return [...existingTagIds, ...newTagIds];
+}
+
+export async function createActivityTags(activityId, tagIds) {
+  const values = tagIds.map((id) => `(${activityId}, ${id})`).join(', ');
+  const query = `
+      INSERT INTO activity_tag (activity_id, tag_id)
+      VALUES ${values}
+      ON CONFLICT DO NOTHING
+      RETURNING *
+    `;
+  const { rows } = await pool.query(query);
+  return rows;
 }

@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import ActivityCard from "../components/ActivityCard";
 import { toast } from "react-toastify";
-import Search from "../components/layout/EmptyResult";
+import NotFound from "../components/layout/NotFound";
 import Loader from "../components/layout/Loader";
 import moment from "moment";
+import { useLocation } from "react-router-dom";
 
 const Homepage = () => {
   const [loading, setLoading] = useState(false);
@@ -24,8 +25,11 @@ const Homepage = () => {
     lat: "",
     lng: "",
   });
+  const location = useLocation();
 
   useEffect(() => {
+    const searchInput = location.state?.searchInput;
+
     const fetchActivities = async () => {
       let queryParams = new URLSearchParams({
         typeId: selectedType,
@@ -52,8 +56,39 @@ const Homepage = () => {
       }
     };
 
-    fetchActivities();
-  }, [selectedType, selectedDate, selectedDistance, selectPrice]);
+    const searchActivities = async () => {
+      try {
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_API_URL
+          }/activities/search?query=${searchInput}`
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          setActivities(result);
+        } else {
+          console.error("Search request failed");
+        }
+      } catch (error) {
+        console.error("Error while searching:", error);
+      }
+    };
+
+    if (searchInput) {
+      searchActivities();
+      location.state.searchInput = null;
+    } else {
+      fetchActivities();
+    }
+  }, [
+    selectedType,
+    selectedDate,
+    selectedDistance,
+    selectPrice,
+    currentLocation,
+    location,
+  ]);
 
   useEffect(() => {
     const getActivityTypes = async () => {
@@ -105,7 +140,7 @@ const Homepage = () => {
   return (
     <div>
       <div>
-        <Header />
+        <Header setActivities={setActivities} />
       </div>
       <div className="px-5 py-6 w-full bg-white">
         <div className="w-max-width flex gap-10 mx-auto mt-10">
@@ -216,8 +251,8 @@ const Homepage = () => {
                 ))
               ) : (
                 <div className="text-center">
-                  <Search />
-                  <p className="text-[20px]">沒有符合的活動</p>
+                  <NotFound />
+                  <p className="text-[26px] mt-2">沒有符合的活動</p>
                 </div>
               )}
             </div>

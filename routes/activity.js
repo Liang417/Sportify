@@ -23,7 +23,7 @@ router.post(
 router.patch('/activity/:id/attend/', userAuth, attendActivity);
 router.patch('/activity/:id/cancel/', userAuth, cancelAttendActivity);
 router.delete('/activity/:id', userAuth, deleteActivity);
-router.get('/activity/search', searchActivities);
+router.get('/activities/search', searchActivities);
 router.get('/activity/detail/:id', getActivityDetail);
 router.get('/activity/types', getTypes);
 router.get('/activities/', getActivities);

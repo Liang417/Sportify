@@ -15,12 +15,12 @@ const ActivityCard = ({ activity }) => {
   return (
     <div className="bg-white border-gray-300 border p-6 my-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
       <Link to={`/activity/detail/${activity.id}`} className="block">
-        <div className="flex items-center mb-5">
+        <div className="flex items-center relative">
           <div className="flex-shrink-0 mr-4">
             <img
               src={`${import.meta.env.VITE_UPLOAD_URL}/${activity.picture}`}
               alt={activity.title}
-              className="w-[200px] h-[120px] object-cover rounded-lg"
+              className="w-[200px] h-[150px] object-cover rounded-lg"
             />
           </div>
           <div className="flex-1 pl-4">
@@ -35,6 +35,16 @@ const ActivityCard = ({ activity }) => {
             </div>
             <div className="text-sm text-gray-500 mt-2">
               {activity.current_attendees_count} 位參加者
+            </div>
+            <div className="mt-2">
+              {activity.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-3 py-1 mr-2 bg-green-500 rounded-full text-white text-xs"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
         </div>
