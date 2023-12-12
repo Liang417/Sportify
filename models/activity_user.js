@@ -70,22 +70,25 @@ export async function getUserActivities(userId, query) {
   const queryParams = [userId, new Date()];
 
   if (query.option === 'attending') {
-    condition = 'WHERE user_id = $1 AND start_from > $2 ORDER BY start_from ASC';
-  }
-
-  if (query.option === 'hosting') {
-    condition = 'WHERE host_id = $1 AND start_from > $2 ORDER BY start_from ASC';
-  }
-
-  if (query.option === 'past') {
-    condition = 'WHERE user_id = $1 AND start_from < $2 ORDER BY start_from ASC';
+    condition = 'user_id = $1 AND start_from > $2';
+  } else if (query.option === 'hosting') {
+    condition = 'host_id = $1 AND start_from > $2';
+  } else if (query.option === 'past') {
+    condition = 'user_id = $1 AND start_from < $2';
   }
 
   const { rows } = await pool.query(
     `
-    SELECT * FROM activity_user
+    SELECT 
+      activity.*,
+      array_agg(tag.name) as tags
+    FROM activity_user
     JOIN activity ON activity_user.activity_id = activity.id
-    ${condition}
+    JOIN activity_tag ON activity.id = activity_tag.activity_id
+    JOIN tag ON activity_tag.tag_id = tag.id
+    WHERE ${condition}
+    GROUP BY activity.id
+    ORDER BY start_from ASC
   `,
     queryParams,
   );

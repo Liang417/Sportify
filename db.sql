@@ -1,7 +1,6 @@
 CREATE EXTENSION postgis;
 CREATE INDEX location_idx ON activity USING GIST (location);
 
-
 CREATE TABLE "user" (
   id BIGSERIAL PRIMARY KEY,
   name VARCHAR(30),
@@ -43,7 +42,8 @@ CREATE TABLE "activity_user" (
 
 CREATE TABLE "activity_tag" (
   activity_id INT REFERENCES "activity" (id),
-  tag_id INT REFERENCES "tag" (id)
+  tag_id INT REFERENCES "tag" (id),
+  PRIMARY KEY (activity_id, tag_id)
 );
 
 CREATE TABLE "activity_type" (
