@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { getUser } from "../redux/slice/userSlice";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -8,6 +10,7 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [avatar, setAvatar] = useState(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -23,6 +26,7 @@ const Signup = () => {
     const options = {
       method: "POST",
       body: formData,
+      credentials: "include",
     };
 
     const result = await fetch(
@@ -30,10 +34,10 @@ const Signup = () => {
       options
     );
     const response = await result.json();
-    if (response.data) {
-      localStorage.setItem("token", response.token);
+    if (result.ok) {
       toast.success("註冊成功");
-      navigate("/user/profile");
+      dispatch(getUser());
+      navigate("/");
     } else {
       toast.error(response.message);
     }
