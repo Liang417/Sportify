@@ -79,7 +79,7 @@ CREATE TABLE "notification" (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE "comment " (
+CREATE TABLE "comment" (
   id BIGSERIAL PRIMARY KEY,
   activity_id INT REFERENCES "activity" (id),
   user_id INT REFERENCES "user" (id),

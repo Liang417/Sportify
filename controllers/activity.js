@@ -205,6 +205,7 @@ export async function deleteActivity(req, res) {
     const attendees = await activityUserModel.getActivityAttendees(activityId);
     const attendeesIds = attendees.map((attendee) => attendee.user_id);
     await activityUserModel.deleteUsers(activityId);
+    await tagModel.deleteActivityTags(activityId);
     await chatroomModel.deleteChatroomUsers(activityDetail.chatroom_id);
     await activityModel.deleteActivity(activityId);
 
