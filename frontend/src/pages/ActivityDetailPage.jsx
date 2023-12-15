@@ -32,6 +32,7 @@ const ActivityDetailPage = () => {
 
   const formatDate = (dateString) => {
     const options = {
+      timeZone: "UTC",
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -285,7 +286,7 @@ const ActivityDetailPage = () => {
                       {detail?.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="inline-block py-1 px-3 mr-3  bg-green-500 rounded-full text-white text-sm"
+                          className="inline-block py-1 px-3 mr-3  bg-green-700 rounded-full text-white font-bold"
                         >
                           {tag}
                         </span>
@@ -504,11 +505,11 @@ const ActivityDetailPage = () => {
             <div className="max-w-[50vw] mx-auto">
               <div className="flex justify-between text-gray7">
                 <div className="flex-col justify-center sm:flex">
-                  <div className="flex flex-col uppercase leading-7 tracking-tight">
+                  <div className="flex flex-col uppercase leading-7 tracking-tight font-semibold text-[#715025] text-lg">
                     {formatDate(detail.start_from)}
                   </div>
                   <div>
-                    <p className="font-semibold">{detail.title}</p>
+                    <p className="font-semibold text-xl">{detail.title}</p>
                   </div>
                 </div>
 

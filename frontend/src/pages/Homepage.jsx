@@ -159,7 +159,7 @@ const Homepage = () => {
             </LocalizationProvider>
           </div>
 
-          <div className="w-[60%]">
+          <div className="w-[70%]">
             <div className="filter w-full h-min flex items-center justify-evenly mb-5">
               <div>
                 <FormControl sx={{ m: 1, minWidth: 120 }} size="small">

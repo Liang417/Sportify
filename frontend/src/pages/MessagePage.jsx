@@ -183,11 +183,11 @@ const MessagePage = () => {
           </div>
 
           {activeChatroom ? (
-            <div className="w-full border-y-2 border-r-2">
+            <div className="w-full flex flex-col flex-1 border-y-2 border-r-2">
               <div className="bg-green-200 p-4 mb-4 rounded text-lg text-center">
                 {activeChatroom.name}
               </div>
-              <div className="overflow-auto mb-4 h-[70%]">
+              <div className="overflow-auto h-[70%]">
                 {messages &&
                   messages.map((message, index) => (
                     <div

@@ -90,12 +90,9 @@ const CreateActivityPage = () => {
     const formData = new FormData(event.target);
 
     formData.append("tags", JSON.stringify(selectedTags));
-    formData.append(
-      "startFrom",
-      moment(startFrom).format("YYYY-MM-DD HH:mm:ss")
-    );
-    formData.append("endAt", moment(endAt).format("YYYY-MM-DD HH:mm:ss"));
-    formData.append("dateline", moment(dateline).format("YYYY-MM-DD HH:mm:ss"));
+    formData.append("startFrom", new Date(startFrom).toUTCString());
+    formData.append("endAt", new Date(endAt).toUTCString());
+    formData.append("dateline", new Date(dateline).toUTCString());
     formData.append("latitude", latitude);
     formData.append("longitude", longitude);
 
@@ -286,7 +283,7 @@ const CreateActivityPage = () => {
               />
             )}
             PaperComponent={({ children }) => (
-              <Paper style={{ background: '#dddddd' }}>{children}</Paper>
+              <Paper style={{ background: "#dddddd" }}>{children}</Paper>
             )}
             value={selectedTags}
             onChange={(event, newValue) => {
