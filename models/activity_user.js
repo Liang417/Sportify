@@ -81,7 +81,7 @@ export async function getUserActivities(userId, query) {
     `
     SELECT 
       activity.*,
-      array_agg(tag.name) as tags
+      array_agg(DISTINCT tag.name) as tags
     FROM activity_user
     JOIN activity ON activity_user.activity_id = activity.id
     JOIN activity_tag ON activity.id = activity_tag.activity_id

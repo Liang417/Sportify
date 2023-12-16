@@ -161,6 +161,10 @@ export async function decrementAttendance(activityId) {
 }
 
 export async function getActivities(query) {
+  const page = query.page || 1;
+  const limit = 7;
+  const offset = (page - 1) * 6;
+
   let baseQuery = `
   SELECT 
     activity.*, 
@@ -205,6 +209,9 @@ export async function getActivities(query) {
   }
 
   baseQuery += ' GROUP BY activity.id ORDER BY start_from ASC';
+  baseQuery += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+  queryParams.push(limit);
+  queryParams.push(offset);
 
   const { rows } = await pool.query(baseQuery, queryParams);
   return rows;

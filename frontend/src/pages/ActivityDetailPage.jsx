@@ -29,6 +29,7 @@ const ActivityDetailPage = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
 
   const formatDate = (dateString) => {
     const options = {
@@ -221,7 +222,7 @@ const ActivityDetailPage = () => {
 
   return (
     <div>
-      <Header />
+      <Header searchInput={searchInput} setSearchInput={setSearchInput} />
       {loading ? (
         <div className="w-full h-[100vh] flex justify-center items-center bg-white">
           <Loader />

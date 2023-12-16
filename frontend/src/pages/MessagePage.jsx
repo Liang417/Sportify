@@ -20,6 +20,7 @@ const MessagePage = () => {
   const queryParams = new URLSearchParams(location.search);
   const type = queryParams.get("type");
   const chatroomId = queryParams.get("chatroomId");
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
     const test = async () => {
@@ -125,7 +126,7 @@ const MessagePage = () => {
 
   return (
     <div>
-      <Header />
+      <Header searchInput={searchInput} setSearchInput={setSearchInput} />
       <div className="w-3/4 mx-auto flex flex-col mt-6">
         {/* Chat room list section */}
         <div className="w-full p-4">

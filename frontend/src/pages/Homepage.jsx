@@ -10,9 +10,12 @@ import NotFound from "../components/layout/NotFound";
 import Loader from "../components/layout/Loader";
 import moment from "moment";
 import { useLocation } from "react-router-dom";
+import { useRef } from "react";
 
 const Homepage = () => {
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const observerRef = useRef(null);
   const [selectedType, setSelectedType] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     moment().format("YYYY-MM-DD HH:mm:ss")
@@ -27,68 +30,102 @@ const Homepage = () => {
   });
   const location = useLocation();
 
-  useEffect(() => {
-    const searchInput = location.state?.searchInput;
+  const [searchInput, setSearchInput] = useState(
+    location.state?.searchInput || ""
+  );
 
-    const fetchActivities = async () => {
-      let queryParams = new URLSearchParams({
-        typeId: selectedType,
-        date: selectedDate,
-        distance: selectedDistance,
-        price: selectPrice,
-        lat: currentLocation.lat,
-        lng: currentLocation.lng,
-      }).toString();
+  const fetchActivities = async (specificPage) => {
+    let queryParams = new URLSearchParams({
+      typeId: selectedType,
+      date: selectedDate,
+      distance: selectedDistance,
+      price: selectPrice,
+      lat: currentLocation.lat,
+      lng: currentLocation.lng,
+      page: specificPage || page,
+    }).toString();
 
-      try {
-        await fetch(
-          `${import.meta.env.VITE_API_URL}/activities?${queryParams}`,
-          {
-            credentials: "include",
-          }
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            setActivities(data);
-          });
-      } catch (error) {
-        console.error("Fetching activities failed: ", error);
-      }
-    };
-
-    const searchActivities = async () => {
-      try {
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/activities/search?query=${searchInput}`
-        );
-
-        if (response.ok) {
-          const result = await response.json();
-          setActivities(result);
-        } else {
-          console.error("Search request failed");
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/activities?${queryParams}`,
+        {
+          credentials: "include",
         }
-      } catch (error) {
-        console.error("Error while searching:", error);
-      }
-    };
+      );
 
+      if (response.ok) {
+        const { activities, next_page } = await response.json();
+        setActivities((prevActivities) => [...prevActivities, ...activities]);
+        setPage(next_page);
+      } else {
+        console.error("載入活動失敗");
+      }
+    } catch (error) {
+      console.error("載入活動失敗: ", error);
+    }
+  };
+
+  const searchActivities = async () => {
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_URL
+        }/activities/search?query=${searchInput}&page=${page}`
+      );
+
+      if (response.ok) {
+        const { activities, next_page } = await response.json();
+        setActivities((prevActivities) => [...prevActivities, ...activities]);
+        setPage(next_page);
+      } else {
+        console.error("載入搜尋結果失敗");
+      }
+    } catch (error) {
+      console.error("載入搜尋結果失敗:", error);
+    }
+  };
+
+  useEffect(() => {
     if (searchInput) {
       searchActivities();
-      location.state.searchInput = null;
     } else {
-      fetchActivities();
+      const fetchData = async () => {
+        setSearchInput("");
+        setPage(1);
+        setActivities([]);
+        await fetchActivities(1);
+      };
+      fetchData();
     }
-  }, [
-    selectedType,
-    selectedDate,
-    selectedDistance,
-    selectPrice,
-    currentLocation,
-    location,
-  ]);
+  }, [selectedType, selectedDate, selectedDistance, selectPrice]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry.isIntersecting) {
+          if (searchInput) {
+            searchActivities();
+          } else {
+            fetchActivities();
+          }
+        }
+      },
+      { threshold: 0.8 }
+    );
+
+    const currentElement = observerRef.current;
+
+    if (currentElement && page) {
+      observer.observe(currentElement);
+    }
+
+    return () => {
+      if (currentElement) {
+        observer.unobserve(currentElement);
+      }
+    };
+  }, [page, searchInput]);
 
   useEffect(() => {
     const getActivityTypes = async () => {
@@ -140,7 +177,12 @@ const Homepage = () => {
   return (
     <div>
       <div>
-        <Header setActivities={setActivities} />
+        <Header
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+          setActivities={setActivities}
+          setPage={setPage}
+        />
       </div>
       <div className="px-5 py-6 w-full bg-white">
         <div className="w-max-width flex gap-10 mx-auto mt-10">
@@ -154,6 +196,7 @@ const Homepage = () => {
                 onChange={(newValue) => {
                   const formattedDate = newValue.format("YYYY-MM-DD HH:mm:ss");
                   setSelectedDate(formattedDate);
+                  setSearchInput("");
                 }}
               />
             </LocalizationProvider>
@@ -173,6 +216,7 @@ const Homepage = () => {
                     label="Type"
                     onChange={(e) => {
                       setSelectedType(e.target.value);
+                      setSearchInput("");
                     }}
                     className="!rounded-full bg-gray-100 !font-semibold"
                   >
@@ -196,7 +240,10 @@ const Homepage = () => {
                     id="distance-select"
                     value={selectedDistance}
                     label="Distance"
-                    onChange={(e) => handleDistanceChange(e.target.value)}
+                    onChange={(e) => {
+                      handleDistanceChange(e.target.value);
+                      setSearchInput("");
+                    }}
                     className="!rounded-full bg-gray-100 !font-semibold"
                   >
                     <MenuItem value={2000}>2公里</MenuItem>
@@ -220,6 +267,7 @@ const Homepage = () => {
                     label="Price"
                     onChange={(e) => {
                       setSelectPrice(e.target.value);
+                      setSearchInput("");
                     }}
                     className="!rounded-full bg-gray-100 !font-semibold"
                   >
@@ -246,8 +294,14 @@ const Homepage = () => {
               {loading ? (
                 <Loader />
               ) : activities?.length > 0 ? (
-                activities.map((activity) => (
-                  <ActivityCard key={activity.id} activity={activity} />
+                activities.map((activity, index) => (
+                  <div
+                    id={`ID${index}`}
+                    key={index}
+                    ref={index === activities.length - 1 ? observerRef : null}
+                  >
+                    <ActivityCard key={index} activity={activity} />
+                  </div>
                 ))
               ) : (
                 <div className="text-center">

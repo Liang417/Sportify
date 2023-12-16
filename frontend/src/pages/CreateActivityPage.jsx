@@ -33,6 +33,7 @@ const CreateActivityPage = () => {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
@@ -119,7 +120,7 @@ const CreateActivityPage = () => {
   return (
     <div>
       <div>
-        <Header />
+        <Header searchInput={searchInput} setSearchInput={setSearchInput} />
       </div>
       <Box
         className="bg-gray-100 p-8"
