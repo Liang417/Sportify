@@ -20,6 +20,7 @@ const MessagePage = () => {
   const queryParams = new URLSearchParams(location.search);
   const type = queryParams.get("type");
   const chatroomId = queryParams.get("chatroomId");
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
     const test = async () => {
@@ -125,7 +126,7 @@ const MessagePage = () => {
 
   return (
     <div>
-      <Header />
+      <Header searchInput={searchInput} setSearchInput={setSearchInput} />
       <div className="w-3/4 mx-auto flex flex-col mt-6">
         {/* Chat room list section */}
         <div className="w-full p-4">
@@ -183,11 +184,11 @@ const MessagePage = () => {
           </div>
 
           {activeChatroom ? (
-            <div className="w-full border-y-2 border-r-2">
+            <div className="w-full flex flex-col flex-1 border-y-2 border-r-2">
               <div className="bg-green-200 p-4 mb-4 rounded text-lg text-center">
                 {activeChatroom.name}
               </div>
-              <div className="overflow-auto mb-4 h-[70%]">
+              <div className="overflow-auto h-[70%]">
                 {messages &&
                   messages.map((message, index) => (
                     <div

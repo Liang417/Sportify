@@ -58,6 +58,8 @@ export async function createActivity(req, res) {
 export async function searchActivities(req, res) {
   try {
     const { query } = req.query;
+    const page = req.query.page || 1;
+    const from = (page - 1) * 6;
 
     const response = await fetch('http://localhost:9200/activities/_search', {
       method: 'POST',
@@ -71,13 +73,21 @@ export async function searchActivities(req, res) {
             fields: ['title', 'tags', 'location_name'],
           },
         },
+        size: 7,
+        from,
       }),
     });
 
     const data = await response.json();
     const activities = data.hits.hits.map((hit) => hit._source);
-    res.status(200).json(activities);
+    if (activities.length > 6) {
+      activities.pop();
+      res.status(200).json({ activities, next_page: +page + 1 });
+    } else {
+      res.status(200).json({ activities });
+    }
   } catch (err) {
+    console.log(err);
     res.status(500).json({ errors: err });
   }
 }
@@ -233,8 +243,14 @@ export async function deleteActivity(req, res) {
 
 export async function getActivities(req, res) {
   try {
+    const { page } = req.query;
     const activities = await activityModel.getActivities(req.query);
-    res.status(200).json(activities);
+    if (activities.length > 6) {
+      activities.pop();
+      res.status(200).json({ activities, next_page: +page + 1 });
+    } else {
+      res.status(200).json({ activities });
+    }
   } catch (err) {
     res.status(500).json({ errors: err });
   }

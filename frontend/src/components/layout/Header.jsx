@@ -11,12 +11,11 @@ import { BiMessageRoundedCheck } from "react-icons/bi";
 import socketIO from "socket.io-client";
 import { useRef } from "react";
 
-const Header = ({ setActivities }) => {
+const Header = ({ setActivities, setPage, setSearchInput, searchInput }) => {
   const { isAuthenticated, user } = useSelector((state) => state.user);
   const [openNotification, setOpenNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [hasNewNotification, setHasNewNotification] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const notificationIconRef = useRef(null);
   const notificationPopupRef = useRef(null);
   const navigate = useNavigate();
@@ -35,12 +34,15 @@ const Header = ({ setActivities }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/activities/search?query=${searchInput}`
+        `${
+          import.meta.env.VITE_API_URL
+        }/activities/search?query=${searchInput}&page=1`
       );
 
       if (response.ok) {
-        const result = await response.json();
-        setActivities(result);
+        const { activities, next_page } = await response.json();
+        setActivities(activities);
+        setPage(next_page);
       } else {
         console.error("Search request failed");
       }
@@ -127,7 +129,7 @@ const Header = ({ setActivities }) => {
           <input
             id="searchInput"
             type="text"
-            className="w-[600px] py-2 px-10 border-2 border-[##979797] rounded-full focus:outline-none text-[#8B572A]"
+            className="w-[600px] py-2 px-10 border-2 border-[##979797] rounded-full focus:outline-none"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="輸入關鍵字、地點查詢活動"
