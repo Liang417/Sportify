@@ -3,6 +3,8 @@ import Header from "../components/layout/Header";
 import socketIO from "socket.io-client";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 const socket = socketIO(`${import.meta.env.VITE_SOCKET}`, {
   transports: ["websocket"],
 });
@@ -21,16 +23,17 @@ const MessagePage = () => {
   const type = queryParams.get("type");
   const chatroomId = queryParams.get("chatroomId");
   const [searchInput, setSearchInput] = useState("");
+  const [alignment, setAlignment] = useState("private");
 
   useEffect(() => {
-    const test = async () => {
+    const handleTypeChange = async () => {
       if (type === "group") {
         await fetchGroupChatrooms();
       } else {
         await fetchPrivateChatrooms();
       }
     };
-    test();
+    handleTypeChange();
   }, [location, type]);
 
   useEffect(() => {
@@ -91,7 +94,15 @@ const MessagePage = () => {
   };
 
   const handleRoomClick = (chatroom) => {
+    leaveCurrentSocket();
     navigate(`/message?type=${type}&chatroomId=${chatroom.id}`);
+  };
+
+  const leaveCurrentSocket = () => {
+    if (activeChatroom) {
+      socket.emit("leaveRoom", activeChatroom.id);
+      socket.off("getMessage");
+    }
   };
 
   const sendMessage = () => {
@@ -128,29 +139,47 @@ const MessagePage = () => {
     <div>
       <Header searchInput={searchInput} setSearchInput={setSearchInput} />
       <div className="w-3/4 mx-auto flex flex-col mt-6">
-        {/* Chat room list section */}
-        <div className="w-full p-4">
-          <div className="flex items-center justify-evenly">
-            <button
-              onClick={() => navigate("/message?type=private")}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 w-1/3 rounded-full"
-            >
-              私人訊息
-            </button>
-
-            <button
-              onClick={() => navigate("/message?type=group")}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 w-1/3 rounded-full"
-            >
-              群組訊息
-            </button>
-          </div>
-        </div>
-
         {/* Chat display section */}
         <div className="w-full h-[70vh] p-4 flex rounded-lg">
-          <div className="w-1/3 border-2">
-            <ul className="overflow-auto">
+          <div className="w-[40%] border-2 rounded-md">
+            <ul className="overflow-auto h-full">
+              <div className="sticky top-0 bg-white z-10 mb-1">
+                <ToggleButtonGroup
+                  color="primary"
+                  value={alignment}
+                  exclusive
+                  aria-label="Platform"
+                  className="w-full"
+                >
+                  <ToggleButton
+                    className={`${
+                      alignment === "private" ? "!bg-blue-600" : "!bg-blue-400"
+                    } w-[50%] !font-bold !text-white  !border-r-3 !border-r-gray`}
+                    value="private"
+                    onClick={(e) => {
+                      setAlignment(e.target.value);
+                      leaveCurrentSocket();
+                      navigate("/message?type=private");
+                    }}
+                  >
+                    私人訊息
+                  </ToggleButton>
+                  <ToggleButton
+                    className={`${
+                      alignment === "group" ? "!bg-blue-600" : "!bg-blue-400"
+                    } w-[50%] !font-bold !text-white !border-r-3 !border-r-gray`}
+                    value="group"
+                    onClick={(e) => {
+                      setAlignment(e.target.value);
+                      leaveCurrentSocket();
+                      navigate("/message?type=group");
+                    }}
+                  >
+                    群組訊息
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </div>
+
               {privateChatrooms &&
                 privateChatrooms.map((chatroom) => (
                   <li
@@ -158,7 +187,7 @@ const MessagePage = () => {
                     onClick={() => handleRoomClick(chatroom)}
                     className={`p-4 ${
                       activeChatroom?.id === chatroom.id
-                        ? "bg-gray-400"
+                        ? "bg-gray-300"
                         : "hover:bg-gray-200"
                     } rounded cursor-pointer border-b`}
                   >
@@ -184,11 +213,8 @@ const MessagePage = () => {
           </div>
 
           {activeChatroom ? (
-            <div className="w-full flex flex-col flex-1 border-y-2 border-r-2">
-              <div className="bg-green-200 p-4 mb-4 rounded text-lg text-center">
-                {activeChatroom.name}
-              </div>
-              <div className="overflow-auto h-[70%]">
+            <div className="w-full flex flex-col border-y-2 border-r-2 rounded-md">
+              <div className="overflow-auto h-full">
                 {messages &&
                   messages.map((message, index) => (
                     <div
@@ -230,14 +256,14 @@ const MessagePage = () => {
                 <input
                   type="text"
                   placeholder="Message input"
-                  className="border-2 p-2 rounded flex-grow mr-2"
+                  className="border-2 p-2 rounded flex-grow mr-2 focus:outline-none focus:border-gray-500"
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 />
                 <button
                   onClick={sendMessage}
-                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                  className="bg-blue-500 hover:bg-green-500 text-white font-bold py-2 px-4 rounded"
                 >
                   Send
                 </button>

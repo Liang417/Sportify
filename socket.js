@@ -13,6 +13,10 @@ export const init = (httpServer) => {
     socket.on('sendMessage', (message) => {
       io.to(message.chatroom_id).emit('getMessage', message);
     });
+
+    socket.on('leaveRoom', (roomId) => {
+      socket.leave(roomId);
+    });
   });
 
   return io;
