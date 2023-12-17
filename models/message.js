@@ -19,10 +19,12 @@ export async function getMessages(chatroomId) {
       sender_id as sender_id,
       content,
       name as sender_name,
-      avatar as sender_avatar
+      avatar as sender_avatar,
+      send_at
     FROM message
     JOIN "user" ON message.sender_id = "user".id
     WHERE chatroom_id = $1
+    ORDER BY send_at
     `,
     [chatroomId],
   );
