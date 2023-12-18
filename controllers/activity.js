@@ -51,7 +51,7 @@ export async function createActivity(req, res) {
 
     res.status(200).json(newActivity);
   } catch (err) {
-    res.status(500).json({ errors: err });
+    res.status(500).json({ errors: 'Internal server error', message: err.message });
   }
 }
 
@@ -87,7 +87,6 @@ export async function searchActivities(req, res) {
       res.status(200).json({ activities });
     }
   } catch (err) {
-    console.log(err);
     res.status(500).json({ errors: err });
   }
 }

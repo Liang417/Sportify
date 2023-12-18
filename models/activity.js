@@ -89,22 +89,10 @@ export async function getActivityDetail(id) {
   const { rows } = await pool.query(
     `
     SELECT
-      activity.id,
-      activity.title,
-      activity.price,
-      activity.chatroom_id,
-      activity.attendees_limit,
-      activity.current_attendees_count,
-      activity.start_from,
-      activity.end_at,
-      activity.dateline,
-      activity.description,
-      activity.create_at,
-      activity.picture,
-      activity.location_name,
-      activity_type.name as type_name,
+      activity.*,
       ST_X(location::geometry) as longitude,
       ST_Y(location::geometry) as latitude,
+      activity_type.name as type_name,
       "user".id as host_id,
       "user".name as host_name,
       "user".email as host_email,
@@ -116,7 +104,12 @@ export async function getActivityDetail(id) {
     JOIN activity_tag ON activity.id = activity_tag.activity_id
     JOIN tag ON activity_tag.tag_id = tag.id 
     WHERE activity.id = $1
-    GROUP BY activity.id, "user".id, activity_type.name, ST_X(location::geometry), ST_Y(location::geometry)
+    GROUP BY 
+      activity.id,
+      "user".id,
+      activity_type.name,
+      ST_X(location::geometry),
+      ST_Y(location::geometry)
   `,
     [id],
   );
@@ -208,7 +201,7 @@ export async function getActivities(query) {
     baseQuery += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  baseQuery += ' GROUP BY activity.id ORDER BY start_from ASC';
+  baseQuery += ' GROUP BY activity.id ORDER BY start_from ASC, activity.id';
   baseQuery += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
   queryParams.push(limit);
   queryParams.push(offset);
