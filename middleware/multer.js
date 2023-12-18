@@ -25,7 +25,7 @@ const upload = multer({
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image file can be upload'), false);
+      cb(new Error('Only image files (up to 5MB) are allowed'), false);
     }
   },
 });

@@ -202,7 +202,7 @@ const MessagePage = () => {
                     onClick={() => handleRoomClick(chatroom)}
                     className={`p-4 ${
                       activeChatroom?.id === chatroom.id
-                        ? "bg-gray-400"
+                        ? "bg-gray-300"
                         : "hover:bg-gray-200"
                     } rounded cursor-pointer border-b`}
                   >
@@ -270,7 +270,7 @@ const MessagePage = () => {
               </div>
             </div>
           ) : (
-            <div className="w-full flex items-center justify-center text-gray-500 text-lg border-y-2 border-r-2">
+            <div className="w-full flex items-center justify-center text-gray-500 text-lg border-y-2 border-r-2 rounded-md">
               <p>Select a chat room</p>
             </div>
           )}

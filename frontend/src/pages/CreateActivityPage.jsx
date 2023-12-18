@@ -6,6 +6,8 @@ import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 import moment from "moment";
 import {
   Box,
@@ -34,6 +36,7 @@ const CreateActivityPage = () => {
   const [longitude, setLongitude] = useState("");
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
@@ -87,6 +90,11 @@ const CreateActivityPage = () => {
 
     if (!longitude || !latitude)
       return toast.error("請從GoogleMap下拉式選單中選取地圖位置");
+    if (selectedTags.length <= 0) return toast.error("請選擇活動標籤");
+    if (selectedTags.length > 5) return toast.error("活動標籤最多選擇5個");
+    if (!startFrom) return toast.error("請選擇開始時間");
+    if (!endAt) return toast.error("請選擇結束時間");
+    if (!dateline) return toast.error("請選擇截止時間");
 
     const formData = new FormData(event.target);
 
@@ -98,6 +106,7 @@ const CreateActivityPage = () => {
     formData.append("longitude", longitude);
 
     try {
+      setIsLoading(true);
       const response = await fetch(`${import.meta.env.VITE_API_URL}/activity`, {
         method: "POST",
         body: formData,
@@ -110,11 +119,25 @@ const CreateActivityPage = () => {
           navigate(`/activity/detail/${id}`);
         }, 1000);
       } else {
-        toast.error("建立活動失敗");
+        const { errors } = await response.json();
+        toast.error(`建立活動失敗:${errors}`);
       }
     } catch (error) {
       toast.error("建立活動失敗", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleTagChange = (event, newValue) => {
+    const isTagLengthValid = newValue.every((tag) => tag.length <= 10);
+
+    if (!isTagLengthValid) {
+      toast.error("每個標籤最多15個字");
+      return;
+    }
+
+    setSelectedTags(newValue);
   };
 
   return (
@@ -134,13 +157,7 @@ const CreateActivityPage = () => {
           autoComplete="off"
         >
           <h2 className="text-2xl font-bold mb-4 text-center">建立活動</h2>
-          <TextField
-            label="標題"
-            type="text"
-            id="title"
-            name="title"
-            required
-          />
+          <TextField label="標題" type="text" id="title" name="title" />
 
           <FormControl>
             <Select
@@ -279,7 +296,8 @@ const CreateActivityPage = () => {
               <TextField
                 {...params}
                 variant="outlined"
-                placeholder="Tags"
+                helperText="輸入標籤名稱並按下Enter即可新增"
+                placeholder="最多選擇5個標籤"
                 label="Tags"
               />
             )}
@@ -287,9 +305,7 @@ const CreateActivityPage = () => {
               <Paper style={{ background: "#dddddd" }}>{children}</Paper>
             )}
             value={selectedTags}
-            onChange={(event, newValue) => {
-              setSelectedTags(newValue);
-            }}
+            onChange={handleTagChange}
           />
 
           <Button
@@ -315,6 +331,12 @@ const CreateActivityPage = () => {
           >
             發佈活動
           </Button>
+          <Backdrop
+            sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            open={isLoading}
+          >
+            <CircularProgress color="inherit" />
+          </Backdrop>
         </Box>
       </Box>
     </div>

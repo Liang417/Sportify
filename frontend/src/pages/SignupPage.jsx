@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getUser } from "../redux/slice/userSlice";
+import validator from "validator";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -15,13 +16,23 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
+    if (!name || name.trim().length < 2) {
+      return toast.error("暱稱至少兩個字且不可包含空白");
+    }
+
+    if (!validator.isEmail(email)) {
+      return toast.error("請輸入正確的email格式");
+    }
+
+    if (!validator.isLength(password, { min: 6 })) {
+      return toast.error("密碼至少六個字");
+    }
+
     const formData = new FormData();
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
-    if (avatar) {
-      formData.append("avatar", avatar);
-    }
+    formData.append("avatar", avatar);
 
     const options = {
       method: "POST",
@@ -29,17 +40,21 @@ const Signup = () => {
       credentials: "include",
     };
 
-    const result = await fetch(
-      `${import.meta.env.VITE_API_URL}/user/signup`,
-      options
-    );
-    const response = await result.json();
-    if (result.ok) {
-      toast.success("註冊成功");
-      dispatch(getUser());
-      navigate("/");
-    } else {
-      toast.error(response.message);
+    try {
+      const result = await fetch(
+        `${import.meta.env.VITE_API_URL}/user/signup`,
+        options
+      );
+      const response = await result.json();
+      if (result.ok) {
+        toast.success("註冊成功");
+        dispatch(getUser());
+        navigate("/");
+      } else {
+        toast.error(response.errors);
+      }
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
