@@ -172,6 +172,8 @@ const Homepage = () => {
     setSelectedDate("");
     setSelectedDistance("");
     setSelectPrice("");
+    setPage(1);
+    setSearchInput("");
   };
 
   return (
@@ -194,7 +196,7 @@ const Homepage = () => {
                 defaultValue={moment()}
                 value={moment()}
                 onChange={(newValue) => {
-                  const formattedDate = newValue.format("YYYY-MM-DD HH:mm:ss");
+                  const formattedDate = newValue.format("YYYY-MM-DD");
                   setSelectedDate(formattedDate);
                   setSearchInput("");
                 }}

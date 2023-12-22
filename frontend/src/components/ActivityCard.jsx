@@ -41,7 +41,7 @@ const ActivityCard = ({ activity }) => {
               {activity.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-block px-3 py-1 mr-2 bg-green-700 rounded-full text-white text-sm font-bold"
+                  className="inline-block px-3 py-1 mr-2 mt-2 bg-green-700 rounded-full text-white text-sm font-bold"
                 >
                   {tag}
                 </span>

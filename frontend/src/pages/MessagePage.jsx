@@ -166,7 +166,7 @@ const MessagePage = () => {
                   </ToggleButton>
                   <ToggleButton
                     className={`${
-                      alignment === "group" ? "!bg-blue-600" : "!bg-blue-400"
+                      alignment === "group" ? "!bg-blue-600" : "!bg-blue-300"
                     } w-[50%] !font-bold !text-white !border-r-3 !border-r-gray`}
                     value="group"
                     onClick={(e) => {
