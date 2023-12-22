@@ -257,7 +257,7 @@ const ActivityDetailPage = () => {
 
           <div className="flex w-full flex-col items-center justify-between border-bg-gray-100 bg-gray-100 pb-6 px-5">
             <div className="max-w-[75vw] w-full bg-gray-100">
-              <div className="flex flex-row gap-20">
+              <div className="flex flex-row gap-[3rem]">
                 <div className="flex flex-grow flex-col mt-5">
                   <div className="max-w-2xl">
                     <div>
@@ -374,7 +374,7 @@ const ActivityDetailPage = () => {
                   </div>
                 </div>
 
-                <div className="w-[500px] mt-10">
+                <div className="w-[400px] mt-10">
                   <div className="bg-white px-5 pb-3 pt-6 sm:pb-4.5 py-5 rounded-2xl">
                     <div className="flex items-center">
                       <div className="p-3 mr-1">
