@@ -9,7 +9,7 @@ export async function signUp(req, res, next) {
     const { avatar } = req.files;
     const avatarUrl = avatar[0].filename;
 
-    if (!name || !email || !password || !avatarUrl[0]) {
+    if (!name || !email || !password || !avatarUrl) {
       return res.status(400).json({ message: 'Name, email, password, and avatar are required.' });
     }
 

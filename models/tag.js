@@ -48,8 +48,3 @@ export async function createActivityTags(activityId, tagIds) {
   const { rows } = await pool.query(query);
   return rows;
 }
-
-export async function deleteActivityTags(activityId) {
-  const query = `DELETE FROM activity_tag WHERE activity_id = ${activityId}`;
-  await pool.query(query);
-}

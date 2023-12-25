@@ -24,18 +24,6 @@ export async function deleteUser(activityId, userId) {
   return rows[0];
 }
 
-export async function deleteUsers(activityId) {
-  const { rows } = await pool.query(
-    `
-    DELETE FROM activity_user
-    WHERE activity_id = $1
-    RETURNING *
-    `,
-    [activityId],
-  );
-  return rows[0];
-}
-
 export async function getUser(activityId, userId) {
   const { rows } = await pool.query(
     `
