@@ -71,25 +71,23 @@ export async function createChatroomUser(chatroomId, userIds, connection = pool)
   return rows;
 }
 
-export async function deleteChatroomUser(chatroomId, userIds) {
-  const params = userIds.map((userId, index) => `$${index + 2}`).join(', ');
-  const query = `
-    DELETE FROM chatroom_user
-    WHERE chatroom_id = $1 AND user_id IN (${params})
-    RETURNING *
-  `;
-  const values = [chatroomId, ...userIds];
-  const { rows } = await pool.query(query, values);
-  return rows;
-}
-
-export async function deleteChatroomUsers(chatroomId) {
+export async function deleteChatroomUser(chatroomId, userId) {
   const { rows } = await pool.query(
     `
-  DELETE FROM chatroom_user
-  WHERE chatroom_id = $1
-  RETURNING *
-`,
+    DELETE FROM chatroom_user
+    WHERE chatroom_id = $1 AND user_id = $2
+    RETURNING *
+    `,
+    [chatroomId, userId],
+  );
+  return rows[0];
+}
+
+export async function deleteChatroom(chatroomId) {
+  const { rows } = await pool.query(
+    `
+    DELETE FROM chatroom WHERE id = $1;
+    `,
     [chatroomId],
   );
   return rows;

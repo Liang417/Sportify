@@ -8,11 +8,18 @@ import * as tagModel from '../models/tag';
 import pool from '../models/databasePool';
 import { getIO } from '../socket';
 
+export const sendNotificationToAttendees = (notifications) => {
+  const io = getIO();
+  notifications.forEach((notification) => {
+    const roomName = `user-${notification.receiver_id}`;
+    io.to(roomName).emit('getNotification', notification);
+  });
+};
+
 export async function createActivity(req, res) {
   try {
     const hostId = res.locals.user.id;
-    const { picture } = req.files;
-    const pictureFilename = picture[0].filename;
+    const pictureFilename = req.files.picture[0].filename;
     const isPrivate = false;
     let { tags } = req.body;
     tags = JSON.parse(tags);
@@ -153,11 +160,7 @@ export async function attendActivity(req, res) {
       return res.status(400).json({ errors: '這個活動已達到人數上限' });
     }
 
-    const io = getIO();
-    notifications.forEach((notification) => {
-      const roomName = `user-${notification.receiver_id}`;
-      io.to(roomName).emit('getNotification', notification);
-    });
+    sendNotificationToAttendees(notifications);
 
     await connection.query('COMMIT');
     res.status(200).json({ message: '參加成功' });
@@ -176,7 +179,7 @@ export async function cancelAttendActivity(req, res) {
     const { chatroomId, title } = req.body;
 
     await activityUserModel.deleteUser(activityId, userId);
-    await chatroomModel.deleteChatroomUser(chatroomId, [userId]);
+    await chatroomModel.deleteChatroomUser(chatroomId, userId);
     await activityModel.decrementAttendance(activityId);
     const attendees = await activityUserModel.getActivityAttendees(activityId);
     const attendeesIds = attendees
@@ -190,11 +193,8 @@ export async function cancelAttendActivity(req, res) {
       activityId,
       content,
     );
-    const io = getIO();
-    notifications.forEach((notification) => {
-      const roomName = `user-${notification.receiver_id}`;
-      io.to(roomName).emit('getNotification', notification);
-    });
+
+    sendNotificationToAttendees(notifications);
 
     res.status(200).json({ message: '取消成功' });
   } catch (err) {
@@ -208,15 +208,12 @@ export async function deleteActivity(req, res) {
     const userId = res.locals.user.id;
 
     const activityDetail = await activityModel.getActivityDetail(activityId);
-
     if (activityDetail.host_id !== userId) return res.status(401).json({ errors: '活動的主辦人才可以刪除活動' });
 
     const attendees = await activityUserModel.getActivityAttendees(activityId);
     const attendeesIds = attendees.map((attendee) => attendee.user_id);
-    await activityUserModel.deleteUsers(activityId);
-    await tagModel.deleteActivityTags(activityId);
-    await chatroomModel.deleteChatroomUsers(activityDetail.chatroom_id);
     await activityModel.deleteActivity(activityId);
+    await chatroomModel.deleteChatroom(activityDetail.chatroom_id);
 
     await fetch(`http://localhost:9200/activities/_doc/${activityId}`, {
       method: 'DELETE',
@@ -228,15 +225,12 @@ export async function deleteActivity(req, res) {
       activityId,
       content,
     );
-    const io = getIO();
-    notifications.forEach((notification) => {
-      const roomName = `user-${notification.receiver_id}`;
-      io.to(roomName).emit('getNotification', notification);
-    });
+
+    sendNotificationToAttendees(notifications);
 
     res.status(200).json({ message: '活動刪除成功' });
   } catch (err) {
-    res.status(500).json({ errors: err });
+    res.status(500).json({ errors: 'Internal server error', message: err.message });
   }
 }
 
